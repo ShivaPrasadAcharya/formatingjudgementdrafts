@@ -28,7 +28,9 @@ textarea,#out{width:100%;height:480px;border:1px solid var(--bd);border-radius:8
 <p class="s">Upload a judgment draft (.docx, .doc, .rtf, .txt) or paste text. Output: structured .docx with automatic Word numbering. Runs fully in your browser.</p>
 <div class="row">
  <input type="file" id="f" accept=".docx,.doc,.rtf,.txt">
- <select id="mode"><option value="auto">Numbering: auto-detect</option><option value="sections">Sections: 1 / 1.1, 1.2 …</option><option value="flat">Paragraphs only: 1, 2, 3 … (section headings not numbered)</option></select>
+ <select id="mode"><option value="auto">Numbering: auto-detect</option><option value="sections">Sections: 1 / 1.1, 1.2 …</option><option value="flat">Paragraphs only: 1, 2, 3 … (section headings not numbered)</option><option value="all">Irrespective: continuous 1, 2, 3 … (no heading search)</option></select>
+ <select id="font"><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option><option>Arial Unicode MS</option></select>
+ <select id="size"><option value="13">13 pt</option><option value="11">11 pt</option><option value="12">12 pt</option><option value="14">14 pt</option><option value="16">16 pt</option></select>
  <button class="p" id="go">Structure</button>
  <button id="dl" disabled>Download output .docx</button><button id="dld" disabled>Download output .doc</button>
  <button id="dlin">Download input .txt</button>
@@ -117,73 +119,93 @@ const MK=/[\uE001-\uE006]/g,pl=s=>s.replace(MK,''),ND=s=>s.replace(/[०-९]/g,
 const trimF=s=>{let p;do{p=s;s=s.replace(/^([\uE001-\uE006]*)\s+/,'$1').replace(/\s+([\uE001-\uE006]*)$/,'$1')}while(s!==p);return s};
 function cut(s,k){const st=[0,0,0];let n=0,i=0;for(;i<s.length&&n<k;i++){const m='\uE001\uE002\uE003\uE004\uE005\uE006'.indexOf(s[i]);if(m<0)n++;else st[m>>1]=m%2===0?1:0}
  return trimF((st[0]?'\uE001':'')+(st[1]?'\uE003':'')+(st[2]?'\uE005':'')+s.slice(i))}
-const num=s=>{const p=pl(s),m=p.match(/^\s*([0-9०-९]+(?:\.[0-9०-९]+)+)[.)]?\s+/)||p.match(/^\s*([0-9०-९]+)\s*[.)]\s*/)||p.match(/^\s*\(([0-9०-९]+)\)\s*/);return m?{n:ND(m[1]),x:cut(s,m[0].length)}:{n:null,x:trimF(s)}};
-const strip=s=>num(s).x;
+const num=s=>{const p=pl(s),m=p.match(/^\s*([0-9०-९]+(?:\.[0-9०-९]+)+)[.)]?\s+/)||p.match(/^\s*([0-9०-९]+)\s*(?:[.)]\s*|[:\-–]\s+)/)||p.match(/^\s*\(([0-9०-९]+)\)\s*/);return m?{n:ND(m[1]),x:cut(s,m[0].length)}:{n:null,x:trimF(s)}};
+const strip=s=>num(s).x,nz=x=>pl(x).trim();
+const stripT=s=>{for(let k=0;k<3;k++){const n=num(s);if(n.n!==null){s=n.x;continue}const m=pl(s).match(/^\s*(\([क-ह]\)|[क-ह][.)])\s+/);if(m)s=cut(s,m[0].length);else break}return s};
 const isHead=x=>{x=pl(x);return x.length<=70&&!/[।?:;–-]$/.test(x)&&x.split(/\s+/).length<=9};
 const key=s=>pl(s).replace(/[\s:–\-]/g,'');
-function items(a,forceSec){
- const P=a.map(num),multi=P.filter(p=>p.n).length>=2,r=[];
- P.forEach((p,i)=>{const prev=r[r.length-1];
-  if(!p.n&&multi&&prev&&!/[।?!:–-]\s*$/.test(pl(prev.x))){prev.x+=' '+p.x;return}
-  const nx=P[i+1],head=p.n?forceSec&&/^\d+$/.test(p.n)&&nx&&nx.n&&nx.n.startsWith(p.n+'.')&&isHead(p.x):isHead(p.x);
+const RF=/^(तथ्यगतबेहोरा|तथ्यगतखण्ड|तथ्यखण्ड|तथ्य)$/,RH=/^((यसअदालतको)?(ठहर|ठहरखण्ड)|इन्साफ(खण्ड)?)$/,RT=/^तपस[िी]ल(खण्ड)?$/;
+const R1='वादी|निवेदक|पुनरावेदक|पुनरावेदिका|जाहेरवाला|उजुरवाला|दरखास्तवाला',R2='प्रतिवादी|विपक्षी|प्रत्यर्थी|प्रत्यर्थिनी|विपक्षिनी',RA=R1+'|'+R2;
+const isR1=r=>new RegExp('^('+R1+')$').test(r),ROLEL=new RegExp('^('+RA+')(हरू)?$'),DOTR=new RegExp('\\.{3,}\\s*('+RA+')(हरू)?\\s*$');
+const PRE=new RegExp('^(.*?\\S)[ \\t]*(?:\\t|\\.{2,}|…+|_{2,}|[-–]{3,}|·{2,})[\\s.…_\\-–·\\uE001-\\uE006]*('+RA+')(हरू)?[\\uE001-\\uE006]*\\s*$');
+const pClean=x=>x.replace(/[\s.…_\-–·\uE001-\uE006]*(?:\.{2,}|…+|_{2,}|[-–]{2,}|·{2,})[\s.…_\-–·\uE001-\uE006]*$/,''),endP=x=>/[।.]$/.test(pl(x))?x:x+'।';
+function items(a,forceSec,all){
+ const P=a.map(num).filter(p=>nz(p.x)),multi=P.filter(p=>p.n).length>=2,r=[];
+ P.forEach((p,i)=>{const prev=r[r.length-1],k=key(p.x);
+  if(all&&!p.n&&(RF.test(k)||RH.test(k)||RT.test(k))){r.push({t:'H',x:RF.test(k)?'तथ्यगत बेहोरा':RT.test(k)?'तपसिल':'यस अदालतको ठहर'});return}
+  if(!p.n&&multi&&prev&&prev.t==='p'&&!/[।?!:–-]\s*$/.test(pl(prev.x))){prev.x+=' '+p.x;return}
+  const nx=P[i+1],head=all?false:p.n?forceSec&&/^\d+$/.test(p.n)&&nx&&nx.n&&nx.n.startsWith(p.n+'.')&&isHead(p.x):isHead(p.x);
   r.push({t:head?'h':'p',x:p.x,sub:!!(p.n&&p.n.includes('.')&&prev&&prev.t==='p')})})
  return r}
 function parse(text,mode){
- const L=text.replace(/^\uFEFF/,'').split(/\r?\n/).map(s=>trimF(s.replace(/[\s\u200b]+/g,' '))).filter(l=>pl(l).trim()),LP=L.map(pl);
+ const all=mode==='all';
+ const L=text.replace(/^\uFEFF/,'').split(/\r?\n/).map(s=>trimF(s.replace(PRE,'$1 ........ $2$3').replace(/[\s\u200b]+/g,' '))).filter(l=>nz(l)),LP=L.map(pl);
  const find=(re,from=0)=>{for(let i=from;i<L.length;i++)if(re.test(key(L[i])))return i;return -1};
- const iF=find(/^(तथ्यगतबेहोरा|तथ्यखण्ड|तथ्य)$/),iH=find(/^(यसअदालतको)?(ठहर|ठहरखण्ड|इन्साफखण्ड)$/,iF+1),iT=find(/^तपस[िी]ल$/,iH+1);
- if(iF<0||iH<0||iT<0)throw new Error('Could not find main headings: '+[iF<0&&'तथ्यगत बेहोरा/तथ्यखण्ड',iH<0&&'यस अदालतको ठहर/ठहरखण्ड',iT<0&&'तपसिल'].filter(Boolean).join(', '));
- let iE=LP.findIndex((l,i)=>i>iT&&/^\(.*\)$|^जिल्ला न्यायाधीश/.test(l));if(iE<0)iE=L.length;
+ let iF=0,iH=0,iT=0;
+ if(!all){iF=find(RF);iH=find(RH,iF+1);iT=find(RT,iH+1);
+  if(iF<0||iH<0||iT<0)throw new Error('Could not find main headings: '+[iF<0&&'तथ्यगत बेहोरा/तथ्य खण्ड',iH<0&&'यस अदालतको ठहर/ठहर खण्ड',iT<0&&'तपसिल/तपसिल खण्ड'].filter(Boolean).join(', ')+'. Choose the "Irrespective" numbering option to number all paragraphs without these headings.')}
+ const iTitle=LP.slice(0,all?30:iF).findIndex(l=>key(l)==='फैसला'),FLD=/^(मुद्दा|रजिष्ट्रेशन|दायरी|फैसला|निर्णय)/;
+ let hEnd=iF;
+ if(all){let j=iTitle<0?0:iTitle+1,inP=0,lb=-9;const addr=/बस्ने|निवासी|जिल्ला|गा\.?वि\.?स|नगरपालिका|वडा|रजिष्टर्ड|कार्यालय/;
+  while(j<L.length){const l=LP[j];
+   if(FLD.test(l)&&/[–-]/.test(l)||/^विरुद्ध$/.test(l)||DOTR.test(l)){j++;continue}
+   if(ROLEL.test(l)){inP=1;lb=j;j++;continue}
+   if(/^न्याय प्रशासन|अधिकारक्षेत्र/.test(l)){j++;break}
+   let k=-1;for(let t=j;t<Math.min(j+6,L.length);t++)if(DOTR.test(LP[t])){k=t;break}
+   if(k>=0&&!inP){j=k+1;continue}
+   if(inP&&(j===lb+1||addr.test(l)&&j-lb<7)){j++;continue}
+   break}
+  hEnd=j}
+ const hd=L.slice(0,hEnd),top=iTitle<0?[]:hd.slice(0,iTitle),rest=iTitle<0?hd:hd.slice(iTitle+1);
+ let iE=LP.findIndex((l,i)=>i>(all?hEnd-1:iT)&&/^\(.*\)$|^जिल्ला न्यायाधीश/.test(l));if(iE<0)iE=L.length;
  let iN=find(/^मस्यौदाअन्तिम|समीक्षाटिप्पणी/,iE);if(iN<0)iN=L.length;
- const iTitle=LP.slice(0,iF).findIndex(l=>key(l)==='फैसला');
- const top=iTitle<0?[]:L.slice(0,iTitle),rest=iTitle<0?L.slice(0,iF):L.slice(iTitle+1,iF);
  const lab='मुद्दा नम्बर|रजिष्ट्रेशन नम्बर|दायरी मिति|फैसला मिति|निर्णय नम्बर|मुद्दा(?=\\s*[–-])',fre=new RegExp('('+lab+')\\s*[–-]\\s*(.*?)(?=\\s+(?:'+lab+')\\s*[–-]|$)','g');
- const fields=[],pv=[],pd=[];let intro='',cur=[],side=null;
- for(const lf of rest){const l=pl(lf);
-  if(/^(मुद्दा|रजिष्ट्रेशन|दायरी|फैसला|निर्णय)/.test(l)&&/[–-]/.test(l)){for(const m of l.matchAll(fre))fields.push(m[1]+'– '+m[2].trim());continue}
-  if(/^(वादी|प्रतिवादी(हरू)?|विपक्षी)$/.test(l)){side=/^वादी/.test(l)?pv:pd;continue}
+ const fields=[],pv=[],pd=[];let intro='',cur=[],side=null,pvL='',pdL='';
+ for(const lf of rest){const l=pl(lf);let m;
+  if(FLD.test(l)&&/[–-]/.test(l)){for(const q of l.matchAll(fre))fields.push(q[1]+'– '+q[2].trim());continue}
+  if(m=l.match(ROLEL)){if(isR1(m[1])){side=pv;pvL=m[1]}else{side=pd;pdL=m[1]}continue}
   if(/^विरुद्ध$/.test(l))continue;
   if(/^न्याय प्रशासन|अधिकारक्षेत्र/.test(l)){intro=lf;continue}
-  const m=l.match(/\.{3,}\s*(वादी|प्रतिवादी(?:हरू)?)\s*$/);
-  if(m){cur.push(strip(lf.replace(/\s*\.{3,}[^]*$/,'')));(m[1]==='वादी'?pv:pd).push(...cur);cur=[];continue}
+  if(m=l.match(DOTR)){const r1=isR1(m[1]);if(r1)pvL=m[1];else pdL=m[1];cur.push(strip(lf.replace(/\s*\.{3,}[^]*$/,'')));(r1?pv:pd).push(...cur);cur=[];continue}
   if(side)side.push(strip(lf));else cur.push(strip(lf));
  }
- const forceSec=mode==='sections',facts=items(L.slice(iF+1,iH),forceSec),holds=items(L.slice(iH+1,iT),forceSec);
+ const fin=a=>a.filter(nz).map(x=>endP(pClean(x))),forceSec=mode==='sections';
+ const facts=all?[]:items(L.slice(iF+1,iH),forceSec),holds=all?[]:items(L.slice(iH+1,iT),forceSec);
  const sec=mode==='sections'||(mode==='auto'&&[...facts,...holds].filter(i=>i.t==='h').length>=2);
- const end=x=>/[।.]$/.test(pl(x))?x:x+'।';
- return{top,fields,pv:pv.map(end),pd:pd.map(end),intro,facts,holds,sec,
-  tap:L.slice(iT+1,iE).map(strip),close:L.slice(iE,iN),note:L.slice(iN)}
+ return{top,fields,pv:fin(pv),pd:fin(pd),pvL,pdL,intro,facts,holds,sec,all,body:all?items(L.slice(hEnd,iE),false,true):[],
+  tap:all?[]:L.slice(iT+1,iE).map(stripT).filter(nz),close:L.slice(iE,iN),note:L.slice(iN)}
 }
 function segs(t){const r=[],st={b:0,u:0,i:0};let cur='';const f=()=>{if(cur)r.push({s:cur,...st});cur=''};
  for(const ch of t){const k='\uE001\uE002\uE003\uE004\uE005\uE006'.indexOf(ch);if(k<0)cur+=ch;else{f();st['bui'[k>>1]]=k%2===0?1:0}}f();return r}
 function plan(m){
  const o=[],A=(k,t,x={})=>o.push({k,t,...x}),N=(ref,lvl=0)=>({num:{ref,lvl}});
  m.top.forEach(t=>A('c',t,{b:1}));A('c','फैसला',{b:1,u:1});m.fields.forEach(t=>A('c',t,{b:1}));
- A('l','वादी',{b:1,u:1,sp:1});m.pv.forEach(t=>A('j',t,N('pv')));
- A('l','प्रतिवादी',{b:1,u:1,sp:1});m.pd.forEach(t=>A('j',t,N('pd')));
+ A('l',m.pvL||'वादी',{b:1,u:1,sp:1});m.pv.forEach(t=>A('j',t,N('pv')));
+ A('l',m.pdL||'प्रतिवादी',{b:1,u:1,sp:1});m.pd.forEach(t=>A('j',t,N('pd')));
  if(m.intro)A('j',m.intro,{sp:1,first:1});
  const part=(title,its)=>{A('h',title,{b:1,u:1});let seen=false;
   for(const it of its){
    if(it.t==='h'){seen=true;A('l',it.x,m.sec?{b:1,u:1,sp:1,...N('sec',0)}:{b:1,sp:1})}
    else if(m.sec&&!seen)A('j',it.x);else A('j',it.x,m.sec?N('sec',1):it.sub?N('flat',1):N('flat'))}};
- part('तथ्यगत बेहोरा',m.facts);part('यस अदालतको ठहर',m.holds);
- A('h','तपसिल',{b:1,u:1});m.tap.forEach(t=>A('j',t,N('tap')));
+ if(m.all)m.body.forEach(it=>it.t==='H'?A('h',it.x,{b:1,u:1}):A('j',it.x,it.sub?N('flat',1):N('flat')));
+ else{part('तथ्यगत बेहोरा',m.facts);part('यस अदालतको ठहर',m.holds);
+ A('h','तपसिल',{b:1,u:1});m.tap.forEach(t=>A('j',t,N('tap')))}
  m.close.forEach((t,i)=>/^\(.*\)$|^जिल्ला न्यायाधीश/.test(pl(t))?A('r',t):/^फैसला तयार/.test(pl(t))?A('l',t,{b:1,u:1,sp:1}):/^इति संवत्/.test(pl(t))?A('l',t,{sp:1}):A('l',t));
  if(m.note.length){A('pb','');A('h',m.note[0],{b:1,u:1});m.note.slice(1).forEach(t=>A('j',t))}
  return o
 }
 function labels(o){const c={};return o.map(p=>{if(!p.num)return'';const r=p.num.ref;c[r]=c[r]||[0,0];
  if(p.num.lvl===0){c[r][0]++;c[r][1]=0;return dev(c[r][0])+'.'}c[r][1]++;return dev(c[r][0])+'.'+dev(c[r][1])})}
-function preview(o){const lb=labels(o);$('out').innerHTML=o.map((p,i)=>p.k==='pb'?'<hr>':
+function preview(o){$('out').style.fontFamily=`"${$('font').value}","Nirmala UI",sans-serif`;const lb=labels(o);$('out').innerHTML=o.map((p,i)=>p.k==='pb'?'<hr>':
  `<div class="${{c:'c',h:'c',r:'r',j:'j',l:''}[p.k]} ${p.b?'b':''} ${p.u?'u':''} ${p.num?'i':''}" ${p.sp?'style="margin-top:12px"':''}>${p.num?`<span class="n">${lb[i]}</span>`:''}${p.k==='j'&&p.first?'&emsp;&emsp;':''}${segs(p.t).map(g=>(g.b?'<b>':'')+(g.u?'<u>':'')+(g.i?'<i>':'')+esc(g.s)+(g.i?'</i>':'')+(g.u?'</u>':'')+(g.b?'</b>':'')).join('')}</div>`).join('')}
 async function build(o,name){
- const D=docx,F='Nirmala UI',lvl=(l,t,left)=>({level:l,format:'hindiNumbers',text:t,alignment:D.AlignmentType.LEFT,style:{paragraph:{indent:{left,hanging:left}}}});
+ const D=docx,F=$('font').value,Z=$('size').value*2,lvl=(l,t,left)=>({level:l,format:'hindiNumbers',text:t,alignment:D.AlignmentType.LEFT,style:{paragraph:{indent:{left,hanging:left}}}});
  const cfg=['pv','pd','tap'].map(r=>({reference:r,levels:[lvl(0,'%1.',567)]}));
  ['flat','sec'].forEach(r=>cfg.push({reference:r,levels:[lvl(0,'%1.',567),lvl(1,'%1.%2',720)]}));
  const al={c:'center',h:'center',r:'right',j:'both',l:'left'};
  const kids=o.map(p=>{
   if(p.k==='pb')return new D.Paragraph({children:[new D.PageBreak()]});
-  const runs=segs(p.t).map(g=>{const B=!!(p.b||g.b),U=p.u||g.u;return new D.TextRun({text:g.s,font:F,size:26,sizeComplexScript:26,bold:B,boldComplexScript:B,italics:!!g.i,italicsComplexScript:!!g.i,underline:U?{type:'single'}:undefined})});
+  const runs=segs(p.t).map(g=>{const B=!!(p.b||g.b),U=p.u||g.u;return new D.TextRun({text:g.s,font:F,size:Z,sizeComplexScript:Z,bold:B,boldComplexScript:B,italics:!!g.i,italicsComplexScript:!!g.i,underline:U?{type:'single'}:undefined})});
   return new D.Paragraph({children:[...(p.first?[new D.TextRun({text:'\t\t',font:F})]:[]),...runs],alignment:al[p.k]||'left',keepNext:p.k==='h'||p.k==='l'&&p.b||undefined,
    spacing:{before:p.sp||p.k==='h'?200:60,after:60},numbering:p.num?{reference:p.num.ref,level:p.num.lvl}:undefined})});
  const doc=new D.Document({numbering:{config:cfg},sections:[{properties:{page:{margin:{top:1440,bottom:1440,left:1440,right:1440}}},children:kids}]});
@@ -229,11 +251,11 @@ $('f').onchange=async e=>{const f=e.target.files[0];if(!f)return;$('msg').textCo
 function mkRtf(o){const R=['pv','pd','tap','flat','sec'],LS=Object.fromEntries(R.map((r,i)=>[r,i+1])),al={c:'\\qc',h:'\\qc',r:'\\qr',j:'\\qj',l:'\\ql'};
  const e=t=>[...t].map(ch=>{const c=ch.charCodeAt(0);return ch==='\\'||ch==='{'||ch==='}'?'\\'+ch:c>127?'\\u'+(c>32767?c-65536:c)+'?':ch}).join('');
  const lv=(t,n,i)=>`\\listlevel\\levelnfc0\\levelnfcn0\\leveljc0\\leveljcn0\\levelfollow0\\levelstartat1\\levelspace0\\levelindent0{\\leveltext\\'0${t.replace(/%\d/g,'x').length}${t.replace('%1',"\\'00").replace('%2',"\\'01")};}{\\levelnumbers${n};}\\fi-${i}\\li${i}`;
- let s='{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 Nirmala UI;}}{\\*\\listtable'+R.map((r,i)=>`{\\list\\listtemplateid${100+i}\\listhybrid{${lv('%1.',"\\'01",567)}}{${lv('%1.%2',"\\'01\\'03",720)}}{\\listname ;}\\listid${1000+i}}`).join('')+'}{\\*\\listoverridetable'+R.map((r,i)=>`{\\listoverride\\listid${1000+i}\\listoverridecount0\\ls${i+1}}`).join('')+'}\\viewkind1\\paperw11906\\paperh16838\\margl1440\\margr1440\\margt1440\\margb1440\n';
+ let s='{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 '+$('font').value+';}}{\\*\\listtable'+R.map((r,i)=>`{\\list\\listtemplateid${100+i}\\listhybrid{${lv('%1.',"\\'01",567)}}{${lv('%1.%2',"\\'01\\'03",720)}}{\\listname ;}\\listid${1000+i}}`).join('')+'}{\\*\\listoverridetable'+R.map((r,i)=>`{\\listoverride\\listid${1000+i}\\listoverridecount0\\ls${i+1}}`).join('')+'}\\viewkind1\\paperw11906\\paperh16838\\margl1440\\margr1440\\margt1440\\margb1440\n';
  for(const p of o){if(p.k==='pb'){s+='\\pard\\page\\par\n';continue}
-  s+='\\pard'+(p.num?`\\ls${LS[p.num.ref]}\\ilvl${p.num.lvl}\\fi-${p.num.lvl?720:567}\\li${p.num.lvl?720:567}`:'')+(al[p.k]||'\\ql')+`\\sb${p.sp||p.k==='h'?200:60}\\sa60\\f0\\fs26 ${p.first?'\\tab\\tab ':''}${segs(p.t).map(g=>{const b=p.b||g.b,u=p.u||g.u;return(b?'\\b':'')+(u?'\\ul':'')+(g.i?'\\i':'')+' '+e(g.s)+(b?'\\b0':'')+(u?'\\ulnone':'')+(g.i?'\\i0':'')}).join('')}\\par\n`}
+  s+='\\pard'+(p.num?`\\ls${LS[p.num.ref]}\\ilvl${p.num.lvl}\\fi-${p.num.lvl?720:567}\\li${p.num.lvl?720:567}`:'')+(al[p.k]||'\\ql')+`\\sb${p.sp||p.k==='h'?200:60}\\sa60\\f0\\fs${$('size').value*2} ${p.first?'\\tab\\tab ':''}${segs(p.t).map(g=>{const b=p.b||g.b,u=p.u||g.u;return(b?'\\b':'')+(u?'\\ul':'')+(g.i?'\\i':'')+' '+e(g.s)+(b?'\\b0':'')+(u?'\\ulnone':'')+(g.i?'\\i0':'')}).join('')}\\par\n`}
  return s+'}'}
-$('go').onclick=run;$('mode').onchange=()=>$('in').value&&run();
+$('go').onclick=run;$('mode').onchange=$('font').onchange=()=>$('in').value&&run();
 $('dl').onclick=async()=>save(await build(ops),'judgment_structured.docx');
 $('dld').onclick=()=>save(new Blob([mkRtf(ops)],{type:'application/msword'}),'judgment_structured.doc');
 $('dlin').onclick=()=>save(new Blob([$('in').value],{type:'text/plain;charset=utf-8'}),'judgment_input.txt');
