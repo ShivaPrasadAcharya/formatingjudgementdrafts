@@ -21,7 +21,7 @@ h2{font-size:14px;margin:0 0 6px;color:var(--mut)}
 textarea,#out{width:100%;height:480px;border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--bg);color:var(--fg);font:14px/1.6 "Nirmala UI",system-ui,sans-serif}
 #out{overflow:auto}#out div{margin:0;line-height:1.15}.c{text-align:center}.b{font-weight:700}.u{text-decoration:underline}.j{text-align:justify}.r{text-align:right}
 .n{display:inline-block;min-width:3em;font-weight:400}.i{padding-left:3em;text-indent:-3em}
-#msg{color:#c0392b;min-height:1.4em}.note{font-size:13px;color:var(--mut)}
+#rec{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}#rec button{padding:4px 8px;font-size:13px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#msg{color:#c0392b;min-height:1.4em}.note{font-size:13px;color:var(--mut)}
 </style>
 </head>
 <body>
@@ -30,6 +30,7 @@ textarea,#out{width:100%;height:480px;border:1px solid var(--bd);border-radius:8
 <p class="s">Upload a judgment draft (.docx, .doc, .rtf, .txt) or paste text. Output: structured .docx with automatic Word numbering. Runs fully in your browser.</p>
 <div class="row">
  <input type="file" id="f" accept=".docx,.doc,.rtf,.txt">
+ <span id="rec"></span>
  <select id="mode"><option value="auto">Numbering: auto-detect</option><option value="sections">Sections: 1 / 1.1, 1.2 …</option><option value="flat">Paragraphs only: 1, 2, 3 … (section headings not numbered)</option><option value="all">Irrespective: continuous 1, 2, 3 … (no heading search)</option></select>
  <select id="font"><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option><option>Arial Unicode MS</option></select>
  <select id="nfont" title="Font for paragraph numbers"><option>Fontasy Himali</option><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option></select>
@@ -283,7 +284,12 @@ async function readAny(f){const ab=await f.arrayBuffer(),u=new Uint8Array(ab),h=
  if(u[0]===0xD0&&u[1]===0xCF){const t=oleDoc(ab);if(!t)throw new Error('Could not read this .doc. Please save it as .docx and upload again.');return t}
  let t=u[0]===0xFF&&u[1]===0xFE?new TextDecoder('utf-16le').decode(ab):new TextDecoder('utf-8').decode(ab);
  if(h.startsWith('{\\rtf'))return rtf(t);if(/^\s*<(!doctype|html)/i.test(t))return htmlM(t);return t}
-$('f').onchange=async e=>{const f=e.target.files[0];if(!f)return;$('msg').textContent='';try{ORIG=f.name;FM=await readAny(f);$('in').value=pl(FM);run()}catch(er){$('msg').textContent=er.message}};
+const RECENT=[];
+function showRecent(){const r=$('rec'),bs=RECENT.map(f=>{const b=document.createElement('button');b.textContent=f.name;b.title=f.name;b.onclick=()=>loadFile(f,true);return b});
+ if(!bs.length){r.replaceChildren();return}const l=document.createElement('span');l.className='note';l.textContent='Recent:';r.replaceChildren(l,...bs)}
+async function loadFile(f,again){$('msg').textContent='';try{ORIG=f.name;FM=await readAny(f);$('in').value=pl(FM);run();
+ const k=RECENT.findIndex(x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified);if(k>=0)RECENT.splice(k,1);RECENT.unshift(f);RECENT.length=Math.min(RECENT.length,3);showRecent()}catch(er){$('msg').textContent=er.message}}
+$('f').onchange=async e=>{const f=e.target.files[0];if(!f)return;await loadFile(f);e.target.value=''};
 function mkRtf(o){const R=['pv','pd','tap','flat','sec'],LS=Object.fromEntries(R.map((r,i)=>[r,i+1])),al={c:'\\qc',h:'\\qc',r:'\\qr',j:'\\qj',l:'\\ql'};
  const e=t=>[...t].map(ch=>{const c=ch.charCodeAt(0);return ch==='\\'||ch==='{'||ch==='}'?'\\'+ch:c>127?'\\u'+(c>32767?c-65536:c)+'?':ch}).join('');
  const lv=(t,n,i)=>`\\listlevel\\levelnfc0\\levelnfcn0\\leveljc0\\leveljcn0\\levelfollow0\\levelstartat1\\levelspace0\\levelindent0{\\leveltext\\'0${t.replace(/%\d/g,'x').length}${t.replace('%1',"\\'00").replace('%2',"\\'01")};}{\\levelnumbers${n};}\\f1\\fs${$('size').value*2}\\fi-${i}\\li${i}`;
