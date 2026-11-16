@@ -9,41 +9,56 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
-:root{--bg:#fff;--fg:#1d1d1f;--mut:#666;--bd:#d8d8dc;--ac:#1a5fb4;--card:#f6f6f8}
-@media(prefers-color-scheme:dark){:root{--bg:#1c1c1e;--fg:#f2f2f4;--mut:#a0a0a8;--bd:#3a3a3e;--ac:#6ea8ff;--card:#26262a}}
+:root{--bg:#f4f5f7;--pn:#fff;--fg:#1d1d1f;--mut:#6b6b73;--bd:#d9dbe0;--ac:#1a5fb4;--card:#f6f6f8;--r:10px}
+@media(prefers-color-scheme:dark){:root{--bg:#141416;--pn:#1c1c1e;--fg:#f2f2f4;--mut:#a0a0a8;--bd:#3a3a3e;--ac:#6ea8ff;--card:#26262a}}
 *{box-sizing:border-box}body{margin:0;font:15px/1.55 system-ui,"Nirmala UI",sans-serif;background:var(--bg);color:var(--fg)}
-main{max-width:1100px;margin:0 auto;padding:20px}h1{font-size:20px;margin:0 0 4px}p.s{color:var(--mut);margin:0 0 16px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
-button,select{font:inherit;padding:7px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer}
-button.p{background:var(--ac);color:#fff;border-color:var(--ac)}
-.g{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:800px){.g{grid-template-columns:1fr}}
-h2{font-size:14px;margin:0 0 6px;color:var(--mut)}
-textarea,#out{width:100%;height:480px;border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--bg);color:var(--fg);font:14px/1.6 "Nirmala UI",system-ui,sans-serif}
-#out{overflow:auto}#out div{margin:0;line-height:1.15}.c{text-align:center}.b{font-weight:700}.u{text-decoration:underline}.j{text-align:justify}.r{text-align:right}
+main{max-width:1180px;margin:0 auto;padding:24px 20px 32px}
+header{margin-bottom:16px}h1{font-size:21px;margin:0 0 4px}p.s{color:var(--mut);margin:0;font-size:14px}
+.card{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 14px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}.field.w2{grid-column:span 2}@media(max-width:560px){.field.w2{grid-column:auto}}
+label{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.02em;text-transform:uppercase}
+button,select,input[type=file]{font:inherit;font-size:14px;padding:8px 12px;border:1px solid var(--bd);border-radius:var(--r);background:var(--card);color:var(--fg);cursor:pointer;min-width:0;max-width:100%}
+input[type=file]{padding:4px 6px;width:100%}input[type=file]::file-selector-button{font:inherit;font-size:13px;padding:5px 10px;margin-right:8px;border:1px solid var(--bd);border-radius:8px;background:var(--pn);color:var(--fg);cursor:pointer}
+select{width:100%}button:hover:not(:disabled),select:hover{border-color:var(--ac)}button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:600}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)}
+.actions .sp{flex:1}.grp{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grp>span{font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.02em}
+.ex{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ex button{font-size:13px;padding:5px 10px}
+#msg{color:#c0392b;min-height:0;margin-top:8px;font-size:14px}#msg:empty{display:none}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:860px){.g{grid-template-columns:1fr}}
+.panel{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:12px;min-width:0}
+h2{font-size:12px;font-weight:600;margin:0 0 8px;color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+textarea,#out{width:100%;height:min(68vh,560px);border:1px solid var(--bd);border-radius:8px;padding:12px;background:var(--bg);color:var(--fg);font:14px/1.6 "Nirmala UI",system-ui,sans-serif;resize:vertical}
+#out{overflow:auto;background:var(--pn)}#out div{margin:0;line-height:1.15}.c{text-align:center}.b{font-weight:700}.u{text-decoration:underline}.j{text-align:justify}.r{text-align:right}
 .n{display:inline-block;min-width:3em;font-weight:400}.i{padding-left:3em;text-indent:-3em}
-#rec{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}#rec button{padding:4px 8px;font-size:13px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#msg{color:#c0392b;min-height:1.4em}.note{font-size:13px;color:var(--mut)}
+.note{font-size:13px;color:var(--mut)}footer.note{margin-top:16px;line-height:1.6}
 </style>
 </head>
 <body>
 <main>
-<h1>फैसला मस्यौदा → संरचना र स्वचालित नम्बरिङ</h1>
-<p class="s">Upload a judgment draft (.docx, .doc, .rtf, .txt) or paste text. Output: structured .docx with automatic Word numbering. Runs fully in your browser.</p>
-<div class="row">
- <input type="file" id="f" accept=".docx,.doc,.rtf,.txt">
- <span id="rec"></span>
- <select id="mode"><option value="auto">Numbering: auto-detect</option><option value="sections">Sections: 1 / 1.1, 1.2 …</option><option value="flat">Paragraphs only: 1, 2, 3 … (section headings not numbered)</option><option value="all">Irrespective: continuous 1, 2, 3 … (no heading search)</option></select>
- <select id="font"><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option><option>Arial Unicode MS</option></select>
- <select id="nfont" title="Font for paragraph numbers"><option>Fontasy Himali</option><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option></select>
- <select id="size"><option value="13">13 pt</option><option value="11">11 pt</option><option value="12">12 pt</option><option value="14">14 pt</option><option value="16">16 pt</option></select>
- <button class="p" id="go">Structure</button>
- <button id="dl" disabled>Download output .docx</button><button id="dld" disabled>Download output .doc</button>
- <button id="dlin">Download input .txt</button>
-</div>
-<div class="row"><b>Examples:</b><button id="e1">Example 1 (flat 1–N)</button><button id="e2">Example 2 (sections 1, 1.1)</button><button id="e1d">Example 1 input .docx</button><button id="e2d">Example 2 input .docx</button></div>
-<div id="msg"></div>
-<div class="g"><div><h2>INPUT (editable)</h2><textarea id="in" placeholder="Paste draft here or upload a file…"></textarea></div>
-<div><h2>OUTPUT (preview of the .docx)</h2><div id="out"></div></div></div>
-<p class="note">Recognised main headings: तथ्यगत बेहोरा / तथ्यखण्ड, यस अदालतको ठहर / ठहरखण्ड, तपसिल. Old .doc files are read on a best-effort basis; if the text looks wrong, save as .docx first. Bold, underline and italic are kept from .docx, .rtf and .html files (the input box shows plain text); .doc and .txt files carry no formatting here. Review all output against the original before use.</p>
+<header><h1>फैसला मस्यौदा → संरचना र स्वचालित नम्बरिङ</h1>
+<p class="s">Upload a judgment draft (.docx, .doc, .rtf, .txt) or paste text. Output: structured .docx with automatic Word numbering. Runs fully in your browser.</p></header>
+<section class="card">
+ <div class="controls">
+  <div class="field w2"><label for="f">Input file</label><input type="file" id="f" accept=".docx,.doc,.rtf,.txt"></div>
+  <div class="field"><label for="rec">Recent files</label><select id="rec"><option value="">Recent files (none)</option></select></div>
+  <div class="field w2"><label for="mode">Numbering</label><select id="mode"><option value="auto">Numbering: auto-detect</option><option value="sections">Sections: 1 / 1.1, 1.2 …</option><option value="flat">Paragraphs only: 1, 2, 3 … (section headings not numbered)</option><option value="all">Irrespective: continuous 1, 2, 3 … (no heading search)</option></select></div>
+  <div class="field"><label for="font">Font</label><select id="font"><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option><option>Arial Unicode MS</option></select></div>
+  <div class="field"><label for="nfont">Number font</label><select id="nfont" title="Font for paragraph numbers"><option>Fontasy Himali</option><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option></select></div>
+  <div class="field"><label for="size">Size</label><select id="size"><option value="13">13 pt</option><option value="11">11 pt</option><option value="12">12 pt</option><option value="14">14 pt</option><option value="16">16 pt</option></select></div>
+ </div>
+ <div class="actions">
+  <button class="p" id="go">Structure</button><span class="sp"></span>
+  <div class="grp"><span>Download</span><button id="dl" disabled>Output .docx</button><button id="dld" disabled>Output .doc</button><button id="dlin">Input .txt</button></div>
+ </div>
+ <div class="ex"><b class="note">Examples</b><button id="e1">Example 1 (flat 1–N)</button><button id="e2">Example 2 (sections 1, 1.1)</button><button id="e1d">Example 1 input .docx</button><button id="e2d">Example 2 input .docx</button></div>
+ <div id="msg"></div>
+</section>
+<div class="g"><div class="panel"><h2>Input (editable)</h2><textarea id="in" placeholder="Paste draft here or upload a file…"></textarea></div>
+<div class="panel"><h2>Output (preview of the .docx)</h2><div id="out"></div></div></div>
+<footer class="note">Recognised main headings: तथ्यगत बेहोरा / तथ्यखण्ड, यस अदालतको ठहर / ठहरखण्ड, तपसिल. Old .doc files are read on a best-effort basis; if the text looks wrong, save as .docx first. Bold, underline and italic are kept from .docx, .rtf and .html files (the input box shows plain text); .doc and .txt files carry no formatting here. Review all output against the original before use.</footer>
 </main>
 <script>
 const EX1=`।। श्री ।।
@@ -284,12 +299,20 @@ async function readAny(f){const ab=await f.arrayBuffer(),u=new Uint8Array(ab),h=
  if(u[0]===0xD0&&u[1]===0xCF){const t=oleDoc(ab);if(!t)throw new Error('Could not read this .doc. Please save it as .docx and upload again.');return t}
  let t=u[0]===0xFF&&u[1]===0xFE?new TextDecoder('utf-16le').decode(ab):new TextDecoder('utf-8').decode(ab);
  if(h.startsWith('{\\rtf'))return rtf(t);if(/^\s*<(!doctype|html)/i.test(t))return htmlM(t);return t}
-const RECENT=[];
-function showRecent(){const r=$('rec'),bs=RECENT.map(f=>{const b=document.createElement('button');b.textContent=f.name;b.title=f.name;b.onclick=()=>loadFile(f,true);return b});
- if(!bs.length){r.replaceChildren();return}const l=document.createElement('span');l.className='note';l.textContent='Recent:';r.replaceChildren(l,...bs)}
-async function loadFile(f,again){$('msg').textContent='';try{ORIG=f.name;FM=await readAny(f);$('in').value=pl(FM);run();
- const k=RECENT.findIndex(x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified);if(k>=0)RECENT.splice(k,1);RECENT.unshift(f);RECENT.length=Math.min(RECENT.length,3);showRecent()}catch(er){$('msg').textContent=er.message}}
+let RECENT=[];
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('judgment-recent',1);r.onupgradeneeded=()=>r.result.createObjectStore('files',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const idbAll=async()=>{const d=await idb();return new Promise(res=>{const q=d.transaction('files').objectStore('files').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})};
+async function idbSave(f){const d=await idb(),all=await idbAll(),tx=d.transaction('files','readwrite'),s=tx.objectStore('files'),same=x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified;
+ all.filter(same).forEach(x=>s.delete(x.id));s.add({name:f.name,size:f.size,lastModified:f.lastModified,blob:f,t:Date.now()});
+ all.filter(x=>!same(x)).sort((a,b)=>b.t-a.t).slice(2).forEach(x=>s.delete(x.id));await new Promise(r=>{tx.oncomplete=r;tx.onerror=r})}
+function showRecent(){const r=$('rec');r.replaceChildren();const o0=document.createElement('option');o0.value='';o0.textContent=RECENT.length?'Recent files ('+RECENT.length+')':'Recent files (none)';r.appendChild(o0);
+ RECENT.forEach((f,i)=>{const o=document.createElement('option');o.value=i;o.textContent=f.name;r.appendChild(o)});r.value=''}
+async function loadFile(f){$('msg').textContent='';try{ORIG=f.name;FM=await readAny(f);$('in').value=pl(FM);run();
+ const k=RECENT.findIndex(x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified);if(k>=0)RECENT.splice(k,1);RECENT.unshift(f);RECENT.length=Math.min(RECENT.length,3);showRecent();
+ try{await idbSave(f)}catch(e){}}catch(er){$('msg').textContent=er.message}}
 $('f').onchange=async e=>{const f=e.target.files[0];if(!f)return;await loadFile(f);e.target.value=''};
+$('rec').onchange=async e=>{const f=RECENT[+e.target.value];e.target.value='';if(f)await loadFile(f)};
+(async()=>{try{const a=await idbAll();RECENT=a.sort((x,y)=>y.t-x.t).slice(0,3).map(x=>new File([x.blob],x.name,{lastModified:x.lastModified}));showRecent()}catch(e){}})();
 function mkRtf(o){const R=['pv','pd','tap','flat','sec'],LS=Object.fromEntries(R.map((r,i)=>[r,i+1])),al={c:'\\qc',h:'\\qc',r:'\\qr',j:'\\qj',l:'\\ql'};
  const e=t=>[...t].map(ch=>{const c=ch.charCodeAt(0);return ch==='\\'||ch==='{'||ch==='}'?'\\'+ch:c>127?'\\u'+(c>32767?c-65536:c)+'?':ch}).join('');
  const lv=(t,n,i)=>`\\listlevel\\levelnfc0\\levelnfcn0\\leveljc0\\leveljcn0\\levelfollow0\\levelstartat1\\levelspace0\\levelindent0{\\leveltext\\'0${t.replace(/%\d/g,'x').length}${t.replace('%1',"\\'00").replace('%2',"\\'01")};}{\\levelnumbers${n};}\\f1\\fs${$('size').value*2}\\fi-${i}\\li${i}`;
