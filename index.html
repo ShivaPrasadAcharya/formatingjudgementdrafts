@@ -46,6 +46,7 @@ textarea,#out{width:100%;height:min(68vh,560px);border:1px solid var(--bd);borde
   <div class="field"><label for="rec">Recent files</label><select id="rec"><option value="">Recent files (none)</option></select></div>
   <div class="field w2"><label for="mode">Numbering</label><select id="mode"><option value="auto">Numbering: auto-detect</option><option value="sections">Sections: 1 / 1.1, 1.2 …</option><option value="flat">Paragraphs only: 1, 2, 3 … (section headings not numbered)</option><option value="all">Irrespective: continuous 1, 2, 3 … (no heading search)</option></select></div>
   <div class="field"><label for="font">Font</label><select id="font"><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option><option>Arial Unicode MS</option></select></div>
+  <div class="field"><label for="efont">English font</label><select id="efont"><option>Calibri</option><option>Arial</option><option>Times New Roman</option></select></div>
   <div class="field"><label for="nfont">Number font</label><select id="nfont" title="Font for paragraph numbers"><option>Fontasy Himali</option><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option></select></div>
   <div class="field"><label for="size">Size</label><select id="size"><option value="13">13 pt</option><option value="11">11 pt</option><option value="12">12 pt</option><option value="14">14 pt</option><option value="16">16 pt</option></select></div>
  </div>
@@ -161,12 +162,12 @@ const dotFix=(x,keep)=>{const q=pl(x);if(/\.$/.test(q)&&q.replace(/\.$/,'').spli
 const LD='.…_\\-–—―─━═·',pClean=x=>{x=x.replace(/\s*।\s*$/,'').replace(new RegExp('\\s*['+LD+']{2,}[\\s'+LD+'\\uE001-\\uE008\\uE100-\\uE2FF]*[०-९0-9]{1,3}[\\s।\\uE001-\\uE008\\uE100-\\uE2FF]*$'),'').replace(/(?:\s+\.)+[\s\uE001-\uE008\uE100-\uE2FF]*$/,'').replace(new RegExp('[\\s'+LD+'\\uE001-\\uE008\\uE100-\\uE2FF]*(?:\\.{2,}|…+|_{2,}|[\\-–—―─━═]+|·{2,})[\\s'+LD+'\\uE001-\\uE008\\uE100-\\uE2FF]*$'),'');return dotFix(x)},endP=x=>/[।.]$/.test(pl(x))?x:x+'।';
 const pName=x=>{x=pl(x).replace(/[।\s]+$/,'');if(!x)return'';const m=x.match(/^.*वर्ष\s*[०-९0-9]+\s*(?:को|की)\s+(.+)$/)||x.match(/^.*(?:बस्ने|निवासी|बसोबास गर्ने|रहने|रहेको|भएको|जाहेरीले|जाहेरवालाले)\s+(.+)$/);return dotFix((m?m[1]:x.split(/[,，]/).pop()).trim())};
 function items(a,forceSec,all){
- const P=a.map(num).filter(p=>nz(p.x)),multi=P.filter(p=>p.n).length>=2,r=[];
+ const P=a.map(num).filter(p=>nz(p.x)),hasSub=P.some(q=>q.n&&/^\d+\.\d+/.test(q.n)),multi=P.filter(p=>p.n).length>=2,r=[];
  P.forEach((p,i)=>{const prev=r[r.length-1],k=key(p.x);
   if(all&&!p.n&&(RF.test(k)||RH.test(k)||RT.test(k))){r.push({t:'H',x:RF.test(k)?'तथ्यगत बेहोरा':RT.test(k)?'तपसिल':'यस अदालतको ठहर'});return}
   if(!p.n&&multi&&prev&&prev.t==='p'&&!/[।?!:–-]\s*$/.test(pl(prev.x))){prev.x+=' '+p.x;return}
   const nx=P[i+1],head=all?false:p.n?forceSec&&/^\d+$/.test(p.n)&&nx&&nx.n&&nx.n.startsWith(p.n+'.')&&isHead(p.x):isHead(p.x);
-  r.push({t:head?'h':'p',x:p.x,sub:!!(p.n&&p.n.includes('.')&&prev&&prev.t==='p')})})
+  r.push({t:head?'h':'p',x:p.x,top:!!(p.n&&/^\d+$/.test(p.n)&&!head&&hasSub),sub:!!(p.n&&p.n.includes('.')&&prev&&prev.t==='p')})})
  return r}
 function parse(text,mode){
  const all=mode==='all';
@@ -216,7 +217,7 @@ function plan(m){
  const part=(title,its)=>{A('h',title,{b:1,u:1,ol:0});let seen=false;
   for(const it of its){
    if(it.t==='h'){seen=true;A('l',it.x,m.sec?{b:1,u:1,sp:1,ol:1,...N('sec',0)}:{b:1,sp:1,ol:1})}
-   else if(m.sec&&!seen)A('j',it.x);else A('j',it.x,m.sec?{...N('sec',1),ol:2}:it.sub?{...N('flat',1),ol:2}:{...N('flat'),ol:1})}};
+   else if(m.sec&&!seen)A('j',it.x);else A('j',it.x,m.sec?(it.top?{...N('sec',0),ol:1}:{...N('sec',1),ol:2}):it.sub?{...N('flat',1),ol:2}:{...N('flat'),ol:1})}};
  if(m.all)m.body.forEach(it=>it.t==='H'?A('h',it.x,{b:1,u:1,ol:0}):A('j',it.x,it.sub?{...N('flat',1),ol:2}:{...N('flat'),ol:1}));
  else{part('तथ्यगत बेहोरा',m.facts);part('यस अदालतको ठहर',m.holds);
  A('h','तपसिल',{b:1,u:1,ol:0});m.tap.forEach(t=>A('j',t,{...N('tap'),ol:1}))}
@@ -226,7 +227,7 @@ function plan(m){
 }
 function labels(o){const c={};return o.map(p=>{if(!p.num)return'';const r=p.num.ref;c[r]=c[r]||[0,0];
  if(p.num.lvl===0){c[r][0]++;c[r][1]=0;return dev(c[r][0])+'.'}c[r][1]++;return dev(c[r][0])+'.'+dev(c[r][1])})}
-function preview(o){const ft=o.footer;$('out').style.fontFamily=`"${$('font').value}","Nirmala UI",sans-serif`;const lb=labels(o);$('out').innerHTML=o.map((p,i)=>p.k==='pb'?'<hr>':
+function preview(o){const ft=o.footer;$('out').style.fontFamily=`"${$('efont').value}","${$('font').value}","Nirmala UI",sans-serif`;const lb=labels(o);$('out').innerHTML=o.map((p,i)=>p.k==='pb'?'<hr>':
  `<div class="${{c:'c',h:'c',r:'r',j:'j',l:''}[p.k]} ${p.b?'b':''} ${p.u?'u':''} ${p.num?'i':''}">${p.num?`<span class="n" style="font-family:\'${$('nfont').value}\',\'Nirmala UI\',sans-serif">${lb[i]}</span>`:''}${p.k==='j'&&p.first?'&emsp;&emsp;':''}${segs(p.t).map(g=>(g.b?'<b>':'')+(g.u?'<u>':'')+(g.i?'<i>':'')+(g.c||g.h?`<span style="${g.c?'color:#'+g.c+';':''}${g.h?'background:#'+hlHex(g.h)+';':''}">${esc(g.s)}</span>`:esc(g.s))+(g.i?'</i>':'')+(g.u?'</u>':'')+(g.b?'</b>':'')).join('')}</div>`).join('')+`<hr><div class="note">Footer: ${[o.fparties,o.fno,o.fname,'पृष्ठ a/b'].filter(Boolean).map(esc).join('&emsp;&emsp;')}</div>`}
 function outName(o,ext){const L=s=>ND(s||''),n=(L(o.dn).match(/\d+/)||[])[0],d=L(o.dt).split(/\D+/).filter(Boolean),c=(o.cn||'').replace(/[\\/:*?"<>|\u0000-\u001f]/g,' ').replace(/\s+/g,' ').replace(/[\s।.–-]+$/,'').trim().slice(0,80);
  const dt=d.length>=3&&d[0].length===4?d[0]+d[1].padStart(2,'0')+d[2].padStart(2,'0'):d.length===1&&/^\d{8}$/.test(d[0])?d[0]:'';
@@ -234,17 +235,22 @@ function outName(o,ext){const L=s=>ND(s||''),n=(L(o.dn).match(/\d+/)||[])[0],d=L
  return (ORIG?ORIG.replace(/\.[^.]*$/,''):'judgment_structured')+'.'+ext}
 function fcols(o){const it=[o.fparties,o.fno,o.fname].filter(Boolean),w=it.map(t=>t.length+6);w.push(18);it.push('पृष्ठ');const S=w.reduce((a,b)=>a+b,0),ws=w.map(x=>Math.round(9616*x/S));ws[ws.length-1]+=9616-ws.reduce((a,b)=>a+b,0);return{items:it,widths:ws}}
 async function build(o,name){
- const D=docx,F=$('font').value,Z=$('size').value*2,NF=$('nfont').value,lvl=(l,t,left)=>({level:l,format:'hindiNumbers',text:t,alignment:D.AlignmentType.LEFT,style:{paragraph:{indent:{left,hanging:left}},run:{font:NF,size:Z}}});
+ const D=docx,F=$('font').value,E=$('efont').value,FN={ascii:E,hAnsi:E,cs:F,eastAsia:F},Z=$('size').value*2,NF=$('nfont').value,lvl=(l,t,left,hg=left)=>({level:l,format:'hindiNumbers',text:t,alignment:D.AlignmentType.LEFT,style:{paragraph:{indent:{left,hanging:hg}},run:{font:NF,size:Z}}});
  const cfg=['pv','pd','tap'].map(r=>({reference:r,levels:[lvl(0,'%1.',567)]}));
- ['flat','sec'].forEach(r=>cfg.push({reference:r,levels:[lvl(0,'%1.',567),lvl(1,'%1.%2',720)]}));
+ ['flat','sec'].forEach(r=>cfg.push({reference:r,levels:[lvl(0,'%1.',567),lvl(1,'%1.%2',1247,680)]}));
+ const SP={before:0,after:0,line:276,lineRule:'auto'},PS=(id,name,ref,level,ol)=>({id,name,basedOn:'Normal',quickFormat:true,run:{font:FN,size:Z,sizeComplexScript:Z},paragraph:{numbering:{reference:ref,level},outlineLevel:ol,alignment:'both',spacing:SP}});
+ const ST=p=>p.num&&(p.num.ref==='sec'||p.num.ref==='flat')?(p.num.ref==='sec'?(p.num.lvl?'SecPara':'SecParaTop'):(p.num.lvl?'FlatSub':'FlatPara')):undefined;
  const al={c:'center',h:'center',r:'right',j:'both',l:'left'};
  const kids=o.map(p=>{
   if(p.k==='pb')return new D.Paragraph({children:[new D.PageBreak()]});
-  const runs=segs(p.t).map(g=>{const B=!!(p.b||g.b),U=p.u||g.u;return new D.TextRun({text:g.s,font:F,size:Z,sizeComplexScript:Z,bold:B,boldComplexScript:B,italics:!!g.i,italicsComplexScript:!!g.i,underline:U?{type:'single'}:undefined,color:g.c||undefined,...(g.h?hlOpt(g.h):{})})});
-  return new D.Paragraph({children:[...(p.first?[new D.TextRun({text:'\t\t',font:F})]:[]),...runs],alignment:al[p.k]||'left',keepNext:p.k==='h'||p.k==='l'&&p.b||undefined,
-   outlineLevel:p.ol,spacing:{before:0,after:0,line:276,lineRule:'auto'},numbering:p.num?{reference:p.num.ref,level:p.num.lvl}:undefined})});
- const doc=new D.Document({numbering:{config:cfg},sections:[{properties:{page:{margin:{top:850,bottom:850,left:1440,right:850,header:340,footer:340}}},footers:{default:new D.Footer({children:(()=>{const fc=fcols(o),NB={style:D.BorderStyle.NONE,size:0,color:'FFFFFF'},R=t=>new D.TextRun({text:t,font:F,size:18,sizeComplexScript:18}),n=fc.items.length-1;return[new D.Table({width:{size:9616,type:D.WidthType.DXA},columnWidths:fc.widths,layout:D.TableLayoutType.FIXED,margins:{top:70,bottom:0,left:0,right:0},borders:{top:{style:D.BorderStyle.SINGLE,size:4,color:'000000'},bottom:NB,left:NB,right:NB,insideHorizontal:NB,insideVertical:NB},rows:[new D.TableRow({children:fc.items.map((t,i)=>new D.TableCell({width:{size:fc.widths[i],type:D.WidthType.DXA},borders:{top:i<0?NB:{style:D.BorderStyle.SINGLE,size:4,color:'000000'},bottom:NB,left:NB,right:NB},children:[new D.Paragraph({spacing:{before:0,after:0},children:i===n?[new D.TextRun({children:['पृष्ठ ',D.PageNumber.CURRENT,'/',D.PageNumber.TOTAL_PAGES],font:F,size:18,sizeComplexScript:18})]:[R(t)]})]}))})]}),new D.Paragraph({spacing:{before:0,after:0,line:20,lineRule:'exact'}})]})()})},children:kids}]});
+  const st=ST(p),runs=segs(p.t).map(g=>{const B=!!(p.b||g.b),U=p.u||g.u;return new D.TextRun({text:g.s,font:FN,size:Z,sizeComplexScript:Z,bold:B,boldComplexScript:B,italics:!!g.i,italicsComplexScript:!!g.i,underline:U?{type:'single'}:undefined,color:g.c||undefined,...(g.h?hlOpt(g.h):{})})});
+  return new D.Paragraph({style:st,children:[...(p.first?[new D.TextRun({text:'\t\t',font:FN})]:[]),...runs],alignment:al[p.k]||'left',keepNext:p.k==='h'||p.k==='l'&&p.b||undefined,
+   outlineLevel:st?undefined:p.ol,spacing:SP,numbering:p.num&&!st?{reference:p.num.ref,level:p.num.lvl}:undefined})});
+ const R=t=>new D.TextRun({text:t,font:FN,size:18,sizeComplexScript:18}),NB='\u00a0',fi=[o.fparties,(o.fno||'').replace(/ /g,NB),(o.fname||'').replace(/ /g,NB)].filter(Boolean);
+ const doc=new D.Document({numbering:{config:cfg},styles:{paragraphStyles:[PS('SecParaTop','Numbered Para 1.','sec',0,1),PS('SecPara','Numbered Para 1.1','sec',1,2),PS('FlatPara','Flat Para 1.','flat',0,1),PS('FlatSub','Flat Para 1.1','flat',1,2)]},
+  sections:[{properties:{page:{margin:{top:850,bottom:850,left:1440,right:850,header:340,footer:340}}},footers:{default:new D.Footer({children:[new D.Paragraph({alignment:'center',border:{top:{style:D.BorderStyle.SINGLE,size:4,space:4,color:'000000'}},spacing:{before:0,after:0},children:[...fi.map(t=>R(t+'   ')),new D.TextRun({children:['पृष्ठ'+NB,D.PageNumber.CURRENT,'/',D.PageNumber.TOTAL_PAGES],font:FN,size:18,sizeComplexScript:18})]})]})},children:kids}]});
  return D.Packer.toBlob(doc)}
+
 function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 function run(){$('msg').textContent='';try{ops=plan(parse(FM&&pl(FM)===$('in').value?FM:$('in').value,$('mode').value));preview(ops);$('dl').disabled=$('dld').disabled=false}catch(e){$('msg').textContent=e.message;$('dl').disabled=$('dld').disabled=true;$('out').innerHTML=''}}
 function rtf(s){let out='',i=0,st=Z0(),em=Z0(),stk=[],skip=0,ct=[];
@@ -315,14 +321,14 @@ $('rec').onchange=async e=>{const f=RECENT[+e.target.value];e.target.value='';if
 (async()=>{try{const a=await idbAll();RECENT=a.sort((x,y)=>y.t-x.t).slice(0,3).map(x=>new File([x.blob],x.name,{lastModified:x.lastModified}));showRecent()}catch(e){}})();
 function mkRtf(o){const R=['pv','pd','tap','flat','sec'],LS=Object.fromEntries(R.map((r,i)=>[r,i+1])),al={c:'\\qc',h:'\\qc',r:'\\qr',j:'\\qj',l:'\\ql'};
  const e=t=>[...t].map(ch=>{const c=ch.charCodeAt(0);return ch==='\\'||ch==='{'||ch==='}'?'\\'+ch:c>127?'\\u'+(c>32767?c-65536:c)+'?':ch}).join('');
- const lv=(t,n,i)=>`\\listlevel\\levelnfc0\\levelnfcn0\\leveljc0\\leveljcn0\\levelfollow0\\levelstartat1\\levelspace0\\levelindent0{\\leveltext\\'0${t.replace(/%\d/g,'x').length}${t.replace('%1',"\\'00").replace('%2',"\\'01")};}{\\levelnumbers${n};}\\f1\\fs${$('size').value*2}\\fi-${i}\\li${i}`;
+ const lv=(t,n,i,g=i)=>`\\listlevel\\levelnfc0\\levelnfcn0\\leveljc0\\leveljcn0\\levelfollow0\\levelstartat1\\levelspace0\\levelindent0{\\leveltext\\'0${t.replace(/%\d/g,'x').length}${t.replace('%1',"\\'00").replace('%2',"\\'01")};}{\\levelnumbers${n};}\\f1\\fs${$('size').value*2}\\fi-${g}\\li${i}`;
  const cl=[],ci=hx=>{let i=cl.indexOf(hx);if(i<0)i=cl.push(hx)-1;return i+1};o.forEach(p=>{if(p.t)segs(p.t).forEach(g=>{if(g.c)ci(g.c);if(g.h)ci(hlHex(g.h))})});
- const CT='{\\colortbl;'+cl.map(x=>`\\red${parseInt(x.slice(0,2),16)}\\green${parseInt(x.slice(2,4),16)}\\blue${parseInt(x.slice(4),16)};`).join('')+'}';const fc=fcols(o);let cu=0;const tx=fc.widths.slice(0,-1).map(w=>'\\tx'+(cu+=w)).join(''),fb=fc.items.slice(0,-1).map(e).concat([e('पृष्ठ ')+'{\\field{\\*\\fldinst PAGE}{\\fldrslt 1}}/{\\field{\\*\\fldinst NUMPAGES}{\\fldrslt 1}}']).join('\\tab ');
- let s='{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 '+$('font').value+';}{\\f1\\fnil\\fcharset0 '+$('nfont').value+';}}'+CT+'{\\*\\listtable'+R.map((r,i)=>`{\\list\\listtemplateid${100+i}\\listhybrid{${lv('%1.',"\\'01",567)}}{${lv('%1.%2',"\\'01\\'03",720)}}{\\listname ;}\\listid${1000+i}}`).join('')+'}{\\*\\listoverridetable'+R.map((r,i)=>`{\\listoverride\\listid${1000+i}\\listoverridecount0\\ls${i+1}}`).join('')+'}\\viewkind1\\paperw11906\\paperh16838\\margl1440\\margr850\\margt850\\margb850\\headery340\\footery340\n{\\footer\\pard\\plain\\f0\\fs18\\brdrt\\brdrs\\brdrw10\\brsp60'+tx+' '+fb+'\\par}\n';
+ const CT='{\\colortbl;'+cl.map(x=>`\\red${parseInt(x.slice(0,2),16)}\\green${parseInt(x.slice(2,4),16)}\\blue${parseInt(x.slice(4),16)};`).join('')+'}';const fi=[o.fparties,(o.fno||'').replace(/ /g,'\u00a0'),(o.fname||'').replace(/ /g,'\u00a0')].filter(Boolean),fb=fi.map(t=>e(t)+'   ').join('')+e('पृष्ठ\u00a0')+'{\\field{\\*\\fldinst PAGE}{\\fldrslt 1}}/{\\field{\\*\\fldinst NUMPAGES}{\\fldrslt 1}}';
+ let s='{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 '+$('font').value+';}{\\f1\\fnil\\fcharset0 '+$('nfont').value+';}{\\f2\\fnil\\fcharset0 '+$('efont').value+';}}'+CT+'{\\*\\listtable'+R.map((r,i)=>`{\\list\\listtemplateid${100+i}\\listhybrid{${lv('%1.',"\\'01",567)}}{${lv('%1.%2',"\\'01\\'03",1247,680)}}{\\listname ;}\\listid${1000+i}}`).join('')+'}{\\*\\listoverridetable'+R.map((r,i)=>`{\\listoverride\\listid${1000+i}\\listoverridecount0\\ls${i+1}}`).join('')+'}\\viewkind1\\paperw11906\\paperh16838\\margl1440\\margr850\\margt850\\margb850\\headery340\\footery340\n{\\footer\\pard\\plain\\qc\\f2\\af0\\fs18\\afs18\\brdrt\\brdrs\\brdrw10\\brsp60 '+fb+'\\par}\n';
  for(const p of o){if(p.k==='pb'){s+='\\pard\\page\\par\n';continue}
-  s+='\\pard'+(p.ol!==undefined?'\\outlinelevel'+p.ol:'')+(p.num?`\\ls${LS[p.num.ref]}\\ilvl${p.num.lvl}\\fi-${p.num.lvl?720:567}\\li${p.num.lvl?720:567}`:'')+(al[p.k]||'\\ql')+`\\sb0\\sa0\\sl276\\slmult1\\f0\\fs${$('size').value*2} ${p.first?'\\tab\\tab ':''}${segs(p.t).map(g=>{const b=p.b||g.b,u=p.u||g.u;return(g.c?'\\cf'+ci(g.c):'')+(g.h?'\\highlight'+ci(hlHex(g.h)):'')+(b?'\\b':'')+(u?'\\ul':'')+(g.i?'\\i':'')+' '+e(g.s)+(b?'\\b0':'')+(u?'\\ulnone':'')+(g.i?'\\i0':'')+(g.c?'\\cf0':'')+(g.h?'\\highlight0':'')}).join('')}\\par\n`}
+  s+='\\pard'+(p.ol!==undefined?'\\outlinelevel'+p.ol:'')+(p.num?`\\ls${LS[p.num.ref]}\\ilvl${p.num.lvl}\\fi-${p.num.lvl?680:567}\\li${p.num.lvl?1247:567}`:'')+(al[p.k]||'\\ql')+`\\sb0\\sa0\\sl276\\slmult1\\f2\\af0\\fs${$('size').value*2}\\afs${$('size').value*2} ${p.first?'\\tab\\tab ':''}${segs(p.t).map(g=>{const b=p.b||g.b,u=p.u||g.u;return(g.c?'\\cf'+ci(g.c):'')+(g.h?'\\highlight'+ci(hlHex(g.h)):'')+(b?'\\b':'')+(u?'\\ul':'')+(g.i?'\\i':'')+' '+e(g.s)+(b?'\\b0':'')+(u?'\\ulnone':'')+(g.i?'\\i0':'')+(g.c?'\\cf0':'')+(g.h?'\\highlight0':'')}).join('')}\\par\n`}
  return s+'}'}
-$('go').onclick=run;$('mode').onchange=$('font').onchange=()=>$('in').value&&run();
+$('go').onclick=run;$('mode').onchange=$('font').onchange=$('efont').onchange=()=>$('in').value&&run();
 $('dl').onclick=async()=>save(await build(ops),outName(ops,'docx'));
 $('dld').onclick=()=>save(new Blob([mkRtf(ops)],{type:'application/msword'}),outName(ops,'doc'));
 $('dlin').onclick=()=>save(new Blob([$('in').value],{type:'text/plain;charset=utf-8'}),'judgment_input.txt');
