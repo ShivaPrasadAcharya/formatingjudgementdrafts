@@ -5,370 +5,73 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>फैसला संरचना र नम्बरिङ | Judgment Draft Structurer</title>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
-
 <style>
-:root{
-  --bg:#f4f5f7;
-  --pn:#fff;
-  --fg:#1d1d1f;
-  --mut:#6b6b73;
-  --bd:#d9dbe0;
-  --ac:#1a5fb4;
-  --card:#f6f6f8;
-  --r:10px;
-}
-@media(prefers-color-scheme:dark){
-  :root{
-    --bg:#141416;
-    --pn:#1c1c1e;
-    --fg:#f2f2f4;
-    --mut:#a0a0a8;
-    --bd:#3a3a3e;
-    --ac:#6ea8ff;
-    --card:#26262a;
-  }
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font:15px/1.55 system-ui,"Nirmala UI",sans-serif;
-  background:var(--bg);
-  color:var(--fg);
-}
-main{max-width:1180px;margin:0 auto;padding:24px 20px 32px}
-header{margin-bottom:16px}
-h1{font-size:21px;margin:0 0 4px}
-p.s{color:var(--mut);margin:0;font-size:14px}
-.card{
-  background:var(--pn);
-  border:1px solid var(--bd);
-  border-radius:12px;
-  padding:16px;
-  margin-bottom:16px;
-}
-.controls{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-  gap:12px 14px;
-}
-.field{display:flex;flex-direction:column;gap:4px;min-width:0}
-.field.w2{grid-column:span 2}
-@media(max-width:560px){.field.w2{grid-column:auto}}
-label{
-  font-size:12px;
-  font-weight:600;
-  color:var(--mut);
-  letter-spacing:.02em;
-  text-transform:uppercase;
-}
-button,select,input[type=file]{
-  font:inherit;
-  font-size:14px;
-  padding:8px 12px;
-  border:1px solid var(--bd);
-  border-radius:var(--r);
-  background:var(--card);
-  color:var(--fg);
-  cursor:pointer;
-  min-width:0;
-  max-width:100%;
-}
-input[type=file]{padding:4px 6px;width:100%}
-input[type=file]::file-selector-button{
-  font:inherit;
-  font-size:13px;
-  padding:5px 10px;
-  margin-right:8px;
-  border:1px solid var(--bd);
-  border-radius:8px;
-  background:var(--pn);
-  color:var(--fg);
-  cursor:pointer;
-}
-select{width:100%}
-button:hover:not(:disabled),select:hover{border-color:var(--ac)}
-button:disabled{opacity:.45;cursor:not-allowed}
+:root{--bg:#f4f5f7;--pn:#fff;--fg:#1d1d1f;--mut:#6b6b73;--bd:#d9dbe0;--ac:#1a5fb4;--card:#f6f6f8;--r:10px}
+@media(prefers-color-scheme:dark){:root{--bg:#141416;--pn:#1c1c1e;--fg:#f2f2f4;--mut:#a0a0a8;--bd:#3a3a3e;--ac:#6ea8ff;--card:#26262a}}
+*{box-sizing:border-box}body{margin:0;font:15px/1.55 system-ui,"Nirmala UI",sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:1100px;margin:0 auto;padding:24px 20px 32px}
+header{margin-bottom:16px}h1{font-size:21px;margin:0 0 4px}p.s{color:var(--mut);margin:0;font-size:14px}
+.card,.panel{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px;min-width:0}
+.drop{display:block;border:2px dashed var(--bd);border-radius:12px;padding:16px;text-align:center;cursor:pointer;color:var(--mut);margin-bottom:14px;transition:.15s}
+.drop:hover,.drop.on{border-color:var(--ac);background:var(--card);color:var(--fg)}.drop b{color:var(--fg)}.vh{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px 14px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}.field.w2{grid-column:span 2}@media(max-width:560px){.field.w2{grid-column:auto}}
+label{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.02em;text-transform:uppercase}
+button,select{font:inherit;font-size:14px;padding:8px 12px;border:1px solid var(--bd);border-radius:var(--r);background:var(--card);color:var(--fg);cursor:pointer;min-width:0;max-width:100%}
+select{width:100%}button:hover:not(:disabled),select:hover{border-color:var(--ac)}button:disabled{opacity:.45;cursor:not-allowed}
 :focus-visible{outline:2px solid var(--ac);outline-offset:1px}
-button.p{
-  background:var(--ac);
-  color:#fff;
-  border-color:var(--ac);
-  font-weight:600;
-}
-.actions{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-  margin-top:14px;
-  padding-top:14px;
-  border-top:1px solid var(--bd);
-}
-.actions .sp{flex:1}
-.grp{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.grp>span{
-  font-size:12px;
-  font-weight:600;
-  color:var(--mut);
-  text-transform:uppercase;
-  letter-spacing:.02em;
-}
-.ex{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.ex button{font-size:13px;padding:5px 10px}
-#msg{color:#c0392b;min-height:0;margin-top:8px;font-size:14px}
-#msg:empty{display:none}
-.g{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:860px){.g{grid-template-columns:1fr}}
-.panel{
-  background:var(--pn);
-  border:1px solid var(--bd);
-  border-radius:12px;
-  padding:12px;
-  min-width:0;
-}
-h2{
-  font-size:12px;
-  font-weight:600;
-  margin:0 0 8px;
-  color:var(--mut);
-  letter-spacing:.04em;
-  text-transform:uppercase;
-}
-textarea,#out{
-  width:100%;
-  height:min(68vh,560px);
-  border:1px solid var(--bd);
-  border-radius:8px;
-  padding:12px;
-  background:var(--bg);
-  color:var(--fg);
-  font:14px/1.6 "Nirmala UI",system-ui,sans-serif;
-  resize:vertical;
-}
-#out{overflow:auto;background:var(--pn)}
-#out div{margin:0;line-height:1.15}
-.c{text-align:center}
-.b{font-weight:700}
-.u{text-decoration:underline}
-.j{text-align:justify}
-.r{text-align:right}
-.n{
-  display:inline-block;
-  min-width:3em;
-  font-weight:400;
-  color:var(--ac);
-}
-.i{padding-left:3em;text-indent:-3em}
-.note{font-size:13px;color:var(--mut)}
-footer.note{margin-top:16px;line-height:1.6}
-summary{cursor:pointer}
-textarea:read-only{opacity:.85}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:600}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--bd)}
+.actions .sp{flex:1}.grp{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ex{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ex button{font-size:13px;padding:5px 10px}
+#msg{color:#c0392b;margin-top:8px;font-size:14px}#msg:empty{display:none}
+.ph{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+h2{font-size:12px;font-weight:600;margin:0;color:var(--mut);letter-spacing:.04em;text-transform:uppercase}
+.ck{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--fg);text-transform:none;letter-spacing:0;cursor:pointer}.ck input{width:16px;height:16px;accent-color:var(--ac);cursor:pointer}
+.stats{font-size:13px;color:var(--mut);margin:0 0 6px}.stats:empty{display:none}
+.chk{margin:0 0 8px;padding:0;list-style:none}.chk:empty{display:none}.chk li{font-size:13px;color:#9a6700;background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.45);border-radius:8px;padding:6px 10px;margin-top:6px}
+@media(prefers-color-scheme:dark){.chk li{color:#f0c050}}
+#out{width:100%;height:min(72vh,760px);overflow:auto;border:1px solid var(--bd);border-radius:8px;padding:14px 16px 14px 14px;background:var(--bg);font-size:14px;line-height:1.6}
+#out div{margin:0;line-height:1.15;position:relative;padding:2px 0}.c{text-align:center}.b{font-weight:700}.u{text-decoration:underline}.j{text-align:justify}.r{text-align:right}
+.n{display:inline-block;min-width:3.4em;font-weight:600;color:var(--ac);font-family:'Nirmala UI','Mangal',system-ui,sans-serif}.i{padding-left:3.4em;text-indent:-3.4em}
+#out hr{border:0;border-top:1px solid var(--bd);margin:12px 0}
+#out div.ed:hover{background:var(--card)}.ctl{display:none;position:absolute;right:0;top:-4px;gap:2px;background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:2;text-indent:0}
+#out div.ed:hover .ctl,#out div.ed:focus-within .ctl{display:inline-flex}.ctl button{padding:1px 7px;font-size:13px;border-radius:6px;line-height:1.5}
+.tx.editing{outline:2px solid var(--ac);background:var(--pn);padding:0 3px;border-radius:3px}
+.empty{color:var(--mut);padding:56px 12px;text-align:center}
+.note{font-size:13px;color:var(--mut)}footer.note{margin-top:4px;line-height:1.6}
 </style>
 </head>
-
 <body>
 <main>
-
-<header>
-  <h1>फैसला मस्यौदा → संरचना र स्वचालित नम्बरिङ</h1>
-  <p class="s">
-    Upload a judgment draft (.docx, .doc, .rtf, .txt) or paste text.
-    Preserve original numbering or create structured Word numbering.
-    Runs fully in your browser.
-  </p>
-</header>
-
+<header><h1>फैसला मस्यौदा → संरचना र स्वचालित नम्बरिङ</h1>
+<p class="s">Upload a judgment draft and download it as a structured Word file with automatic numbering. Everything runs in your browser.</p></header>
 <section class="card">
-  <div class="controls">
-    <div class="field w2">
-      <label for="f">Input file</label>
-      <input type="file" id="f" accept=".docx,.doc,.rtf,.txt">
-    </div>
-
-    <div class="field">
-      <label for="rec">Recent files — latest 5</label>
-      <select id="rec">
-        <option value="">Recent files (none)</option>
-      </select>
-    </div>
-
-    <div class="field w2">
-      <label for="mode">Numbering</label>
-      <select id="mode">
-        <option value="preserve">
-          Keep original numbering intact — मूल नम्बर यथावत्
-        </option>
-        <option value="auto" selected>Numbering: auto-detect</option>
-        <option value="sections">Sections: 1 / 1.1, 1.2 …</option>
-        <option value="flat">
-          Paragraphs only: 1, 2, 3 … (section headings not numbered)
-        </option>
-        <option value="all">
-          Irrespective: continuous 1, 2, 3 … (no heading search)
-        </option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="font">Devanagari font</label>
-      <select id="font">
-        <option>Kalimati</option>
-        <option>Nirmala UI</option>
-        <option>Mangal</option>
-        <option>Arial Unicode MS</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="efont">English font</label>
-      <select id="efont">
-        <option>Calibri</option>
-        <option>Arial</option>
-        <option>Times New Roman</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="nfont">Number font</label>
-      <select id="nfont" title="Font for paragraph numbers">
-        <option>Fontasy Himali</option>
-        <option>Kalimati</option>
-        <option>Nirmala UI</option>
-        <option>Mangal</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="digits">New numbering digits</label>
-      <select id="digits">
-        <option value="ne">नेपाली: १, २, ३</option>
-        <option value="en">English: 1, 2, 3</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="footerMode">Footer</label>
-      <select id="footerMode">
-        <option value="keep">
-          Keep original / generate for structured output
-        </option>
-        <option value="none">Remove footer</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label for="size">Size</label>
-      <select id="size">
-        <option value="13">13 pt</option>
-        <option value="11">11 pt</option>
-        <option value="12">12 pt</option>
-        <option value="14">14 pt</option>
-        <option value="16">16 pt</option>
-      </select>
-    </div>
-  </div>
-
-  <p id="modeHelp" class="note" aria-live="polite"></p>
-
-  <details class="note">
-    <summary>Numbering guide / नम्बरिङ कसरी प्रयोग गर्ने?</summary>
-    <ul>
-      <li>
-        <b>Keep original:</b> retains original numbers, restarts, bullets
-        and hierarchy. DOCX downloads also retain the original document
-        structure and footer. Input is read-only in this mode for DOCX;
-        switch mode to restructure edited text.
-      </li>
-      <li>
-        <b>Auto-detect:</b> chooses sections when two or more short
-        subheadings are detected; otherwise uses paragraph numbering.
-      </li>
-      <li>
-        <b>Sections:</b> numbers subheadings १., २. and their paragraphs
-        १.१, १.२. Text before the first subheading stays unnumbered.
-      </li>
-      <li>
-        <b>Paragraphs only:</b> numbers paragraphs continuously across
-        facts and findings; headings stay unnumbered.
-        तपसिल starts again at १.
-      </li>
-      <li>
-        <b>Irrespective:</b> does not require all three main headings;
-        numbers the body continuously, including तपसिल items.
-        Recognised main headings and closing signatures stay unnumbered.
-      </li>
-      <li>
-        For new numbering, type १., १.१ or १.१.१ to indicate depth,
-        up to five levels. Values are regenerated. A skipped level is
-        reduced to the next valid level. Parties have separate lists.
-      </li>
-    </ul>
-  </details>
-
-  <div class="actions">
-    <button class="p" id="go">Structure</button>
-    <button id="rt" disabled
-      title="Copy numbered output back into the input to correct levels and run again">
-      Use output as input
-    </button>
-    <span class="sp"></span>
-    <div class="grp">
-      <span>Download</span>
-      <button id="dl" disabled>Output .docx</button>
-      <button id="dld" disabled>Output .doc</button>
-      <button id="dlin">Input .txt</button>
-    </div>
-  </div>
-
-  <div class="ex">
-    <b class="note">Examples</b>
-    <button id="e1">Example 1 (flat 1–N)</button>
-    <button id="e2">Example 2 (sections 1, 1.1)</button>
-    <button id="e1d">Example 1 input .docx</button>
-    <button id="e2d">Example 2 input .docx</button>
-  </div>
-
-  <div id="msg" role="status"></div>
+ <label class="drop" id="drop" for="f"><b>Drop a draft here</b> or click to choose a file<br><span class="note">.docx · .doc · .rtf · .txt</span><input type="file" id="f" class="vh" accept=".docx,.doc,.rtf,.txt"></label>
+ <div class="controls">
+  <div class="field w2"><label for="rec">Recent files</label><select id="rec"><option value="">Recent files (none)</option></select></div>
+  <div class="field w2"><label for="mode">Numbering</label><select id="mode"><option value="auto">Numbering: auto-detect</option><option value="sections">Sections: 1 / 1.1, 1.2 …</option><option value="flat">Paragraphs only: 1, 2, 3 … (section headings not numbered)</option><option value="all">Irrespective: continuous 1, 2, 3 … (no heading search)</option></select></div>
+  <div class="field"><label for="font">Font</label><select id="font"><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option><option>Arial Unicode MS</option></select></div>
+  <div class="field"><label for="nfont">Number font</label><select id="nfont" title="Font for paragraph numbers"><option>Fontasy Himali</option><option>Kalimati</option><option>Nirmala UI</option><option>Mangal</option></select></div>
+  <div class="field"><label for="size">Size</label><select id="size"><option value="13">13 pt</option><option value="11">11 pt</option><option value="12">12 pt</option><option value="14">14 pt</option><option value="16">16 pt</option></select></div>
+ </div>
+ <div class="actions">
+  <div class="grp"><button id="undo" disabled>Undo</button><button id="reset" disabled>Reset edits</button></div><span class="sp"></span>
+  <div class="grp"><button id="dl" class="p" disabled>Download .docx</button><button id="dld" disabled>Download .doc</button></div>
+ </div>
+ <div class="ex"><b class="note">Examples</b><button id="e1">Example 1 (flat 1–N)</button><button id="e2">Example 2 (sections 1, 1.1)</button><button id="e1d">Example 1 input .docx</button><button id="e2d">Example 2 input .docx</button></div>
+ <div id="msg"></div>
 </section>
-
-<div class="g">
-  <div class="panel">
-    <h2>Input</h2>
-    <textarea id="in"
-      aria-label="Judgment draft input"
-      placeholder="Paste draft here or upload a file…"></textarea>
-  </div>
-  <div class="panel">
-    <h2>Output preview</h2>
-    <p class="note" style="margin:0 0 8px">
-      New numbering is shown in blue. In original mode, DOCX downloads
-      retain the original Word numbering. This is a text preview, not a
-      page-layout preview.
-    </p>
-    <div id="out"></div>
-  </div>
-</div>
-
-<footer class="note">
-  Recognised main headings: तथ्यगत बेहोरा / तथ्यखण्ड,
-  यस अदालतको ठहर / ठहरखण्ड, तपसिल.
-  In renumbering modes, typed numbers are level hints
-  (1. = level 1, 1.1 = level 2, 1.1.1 = level 3 …);
-  actual values are regenerated sequentially.
-  Use “Use output as input” to correct levels and run again.
-  Old .doc files are read on a best-effort basis; save as .docx first
-  if the text is incorrect.
-  Bold, underline, italic, supported colours and highlights are retained
-  from supported imports; the input box displays plain text.
-  Review the downloaded output against the original before use.
-</footer>
-
+<section class="panel">
+ <div class="ph"><h2>Output preview</h2><label class="ck" title="Show the numbers as they will appear in the downloaded file"><input type="checkbox" id="shownum" checked> Show numbering in preview</label><span class="note">Hover a paragraph: ◀ ▶ change its level · # numbering on/off · ⇡ merge up · ✎ edit (or double-click). Put <b>#</b> at the start of a line in your file for an unnumbered paragraph, <b>*</b> / <b>**</b> / <b>***</b> to set its level.</span></div>
+ <p class="stats" id="stats"></p><ul class="chk" id="chk"></ul>
+ <div id="out"></div>
+</section>
+<footer class="note">Recognised main headings: तथ्यगत बेहोरा / तथ्य खण्ड, यस अदालतको ठहर / ठहर खण्ड, तपसिल / तपसिल खण्ड. Typed numbers such as 1.1 or १.१.१ only show the level; this page renumbers everything. Bold, underline, italic, colour and highlight are kept from .docx and .rtf files. Old .doc files are read on a best-effort basis; if the text looks wrong, save as .docx first. Review all output against the original before use.</footer>
 </main>
-
 <script>
 const EX1=`।। श्री ।।
 काठमाडौं जिल्ला अदालत
@@ -401,7 +104,6 @@ const EX1=`।। श्री ।।
 शाखा अधिकृत–उदाहरण शर्मा
 इजलास नम्बर–४२
 इति संवत् २०८३ साल भदौ महिना ४ गते रोज ५ शुभम्।`;
-
 const EX2=`।। श्री ।।
 काठमाडौं जिल्ला अदालत
 इजलास
@@ -441,1403 +143,252 @@ const EX2=`।। श्री ।।
 (उदाहरण न्यायाधीश)
 जिल्ला न्यायाधीश
 इति संवत् २०८३ साल असार महिना १९ गते रोज ६ शुभम्।`;
-
-const $=id=>document.getElementById(id);
-const dev=n=>String(n).replace(/\d/g,d=>'०१२३४५६७८९'[d]);
-const esc=s=>s.replace(/[&<>]/g,c=>({
-  '&':'&amp;',
-  '<':'&lt;',
-  '>':'&gt;'
-}[c]));
-
+const $=id=>document.getElementById(id),dev=n=>String(n).replace(/\d/g,d=>'०१२३४५६७८९'[d]);
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 let ops=null,FM=null,ORIG='';
-
-const MK=/[\uE001-\uE008\uE100-\uE2FF]/g;
-const pl=s=>s.replace(MK,'');
-const ND=s=>s.replace(/[०-९]/g,d=>'०१२३४५६७८९'.indexOf(d));
-
-const trimF=s=>{
-  let p;
-  do{
-    p=s;
-    s=s
-      .replace(/^([\uE001-\uE008\uE100-\uE2FF]*)\s+/,'$1')
-      .replace(/\s+([\uE001-\uE008\uE100-\uE2FF]*)$/,'$1');
-  }while(s!==p);
-  return s;
-};
-
-const COL=[],HL=[];
-const reg=(a,v)=>{
-  let i=a.indexOf(v);
-  if(i<0){
-    if(a.length>=255)return null;
-    i=a.push(v)-1;
-  }
-  return i;
-};
-
-const Z0=()=>({b:0,u:0,i:0,c:null,h:null});
-const OPEN='\uE001\uE002\uE003\uE004\uE005\uE006';
-
-function applyM(st,ch){
-  const k=OPEN.indexOf(ch);
-  if(k>=0){
-    st['bui'[k>>1]]=k%2===0?1:0;
-    return 1;
-  }
-  if(ch==='\uE007'){st.c=null;return 1}
-  if(ch==='\uE008'){st.h=null;return 1}
-  const c=ch.charCodeAt(0);
-  if(c>=0xE100&&c<0xE200){st.c=c-0xE100;return 1}
-  if(c>=0xE200&&c<0xE300){st.h=c-0xE200;return 1}
-  return 0;
-}
-
-function sync(em,to){
-  let o='';
-  if(em.b!==to.b)o+=to.b?'\uE001':'\uE002';
-  if(em.u!==to.u)o+=to.u?'\uE003':'\uE004';
-  if(em.i!==to.i)o+=to.i?'\uE005':'\uE006';
-  if(em.c!==to.c)o+=to.c===null?'\uE007':String.fromCharCode(0xE100+to.c);
-  if(em.h!==to.h)o+=to.h===null?'\uE008':String.fromCharCode(0xE200+to.h);
-  Object.assign(em,to);
-  return o;
-}
-
-const HLC={
-  yellow:'FFFF00',
-  green:'00FF00',
-  cyan:'00FFFF',
-  magenta:'FF00FF',
-  blue:'0000FF',
-  red:'FF0000',
-  darkBlue:'000080',
-  darkCyan:'008080',
-  darkGreen:'008000',
-  darkMagenta:'800080',
-  darkRed:'800000',
-  darkYellow:'808000',
-  darkGray:'808080',
-  lightGray:'C0C0C0',
-  black:'000000',
-  white:'FFFFFF'
-};
-
-const hlHex=t=>t.startsWith('name:')
-  ?(HLC[t.slice(5)]||'FFFF00')
-  :t.slice(4);
-
-const hlOpt=t=>t.startsWith('name:')&&HLC[t.slice(5)]
-  ?{highlight:t.slice(5)}
-  :{shading:{type:'clear',fill:hlHex(t),color:'auto'}};
-
-function cut(s,k){
-  const st=Z0();
-  let n=0,i=0;
-  for(;i<s.length&&n<k;i++){
-    if(!applyM(st,s[i]))n++;
-  }
-  return trimF(sync(Z0(),st)+s.slice(i));
-}
-
-const norm=s=>{
-  s=s.replace(/[\s\u200b]+/g,' ');
-  for(let k=0;k<3;k++){
-    s=s.replace(/ ([\uE001-\uE008\uE100-\uE2FF]+) /g,' $1');
-  }
-  return /^[\s।॥|]*श्री[\s।॥|]*$/.test(pl(s))
-    ?s
-    :s.replace(/ +([\uE001-\uE008\uE100-\uE2FF]*[,।])/g,'$1');
-};
-
-const num=s=>{
-  const p=pl(s);
-  const m=
-    p.match(/^\s*([0-9०-९]+(?:\.[0-9०-९]+)+)[.)]?\s+/)||
-    p.match(/^\s*([0-9०-९]+)\s*(?:[.)]\s*|[:\-–]\s+)/)||
-    p.match(/^\s*\(([0-9०-९]+)\)\s*/);
-  return m
-    ?{n:ND(m[1]),x:cut(s,m[0].length)}
-    :{n:null,x:trimF(s)};
-};
-
-const strip=s=>num(s).x;
-const nz=x=>pl(x).trim();
-
-const stripT=(s,idx)=>{
-  for(let k=0;k<4;k++){
-    const p=pl(s);
-    let m=
-      p.match(/^\s*[•●○▪■◦·*✓✔►▶]+\s*/)||
-      p.match(/^\s*[–—-]+\s+/)||
-      p.match(/^\s*[(\[]?([0-9०-९]{1,3}(?:[.\-][0-9०-९]{1,3})*)\s*(?:[.)\]।॥:\/]|[\-–]\s)\s*/)||
-      p.match(/^\s*[(\[]([0-9०-९]{1,3})[)\]]\s*/)||
-      p.match(/^\s*[(\[]([क-हa-zA-Z]|[ivxIVX]{1,4})[)\]]\s*/)||
-      p.match(/^\s*([क-हa-z]|[ivxIVX]{2,4})[.)]\s+/);
-
-    if(!m){
-      const b=p.match(/^\s*([0-9०-९]{1,3})\s+/);
-      if(b&&ND(b[1])===String(idx+1))m=b;
-    }
-    if(m&&m[0].length<p.length)s=cut(s,m[0].length);
-    else break;
-  }
-  return s;
-};
-
-const isHead=x=>{
-  x=pl(x);
-  return x.length<=70&&!/[।?:;–-]$/.test(x)&&x.split(/\s+/).length<=9;
-};
-
+const MK=/[\uE001-\uE008\uE100-\uE2FF]/g,pl=s=>s.replace(MK,''),ND=s=>s.replace(/[०-९]/g,d=>'०१२३४५६७८९'.indexOf(d));
+const trimF=s=>{let p;do{p=s;s=s.replace(/^([\uE001-\uE008\uE100-\uE2FF]*)\s+/,'$1').replace(/\s+([\uE001-\uE008\uE100-\uE2FF]*)$/,'$1')}while(s!==p);return s};
+const COL=[],HL=[],reg=(a,v)=>{let i=a.indexOf(v);if(i<0){if(a.length>=255)return null;i=a.push(v)-1}return i};
+const Z0=()=>({b:0,u:0,i:0,c:null,h:null}),OPEN='\uE001\uE002\uE003\uE004\uE005\uE006';
+function applyM(st,ch){const k=OPEN.indexOf(ch);if(k>=0){st['bui'[k>>1]]=k%2===0?1:0;return 1}if(ch==='\uE007'){st.c=null;return 1}if(ch==='\uE008'){st.h=null;return 1}const c=ch.charCodeAt(0);if(c>=0xE100&&c<0xE200){st.c=c-0xE100;return 1}if(c>=0xE200&&c<0xE300){st.h=c-0xE200;return 1}return 0}
+function sync(em,to){let o='';if(em.b!==to.b)o+=to.b?'\uE001':'\uE002';if(em.u!==to.u)o+=to.u?'\uE003':'\uE004';if(em.i!==to.i)o+=to.i?'\uE005':'\uE006';if(em.c!==to.c)o+=to.c===null?'\uE007':String.fromCharCode(0xE100+to.c);if(em.h!==to.h)o+=to.h===null?'\uE008':String.fromCharCode(0xE200+to.h);Object.assign(em,to);return o}
+const HLC={yellow:'FFFF00',green:'00FF00',cyan:'00FFFF',magenta:'FF00FF',blue:'0000FF',red:'FF0000',darkBlue:'000080',darkCyan:'008080',darkGreen:'008000',darkMagenta:'800080',darkRed:'800000',darkYellow:'808000',darkGray:'808080',lightGray:'C0C0C0',black:'000000',white:'FFFFFF'};
+const hlHex=t=>t.startsWith('name:')?(HLC[t.slice(5)]||'FFFF00'):t.slice(4),hlOpt=t=>t.startsWith('name:')&&HLC[t.slice(5)]?{highlight:t.slice(5)}:{shading:{type:'clear',fill:hlHex(t),color:'auto'}};
+function cut(s,k){const st=Z0();let n=0,i=0;for(;i<s.length&&n<k;i++){if(!applyM(st,s[i]))n++}return trimF(sync(Z0(),st)+s.slice(i))}
+const norm=s=>{s=s.replace(/[\s\u200b]+/g,' ');for(let k=0;k<3;k++)s=s.replace(/ ([\uE001-\uE008\uE100-\uE2FF]+) /g,' $1');return /^[\s।॥|]*श्री[\s।॥|]*$/.test(s.replace(/[\uE001-\uE008\uE100-\uE2FF]/g,''))?s:s.replace(/ +([\uE001-\uE008\uE100-\uE2FF]*[,।])/g,'$1')};
+const num=s=>{const p=pl(s),m=p.match(/^\s*([0-9०-९]+(?:\.[0-9०-९]+)+)[.)]?\s+/)||p.match(/^\s*([0-9०-९]+)\s*(?:[.)]\s*|[:\-–]\s+)/)||p.match(/^\s*\(([0-9०-९]+)\)\s*/);return m?{n:ND(m[1]),x:cut(s,m[0].length)}:{n:null,x:trimF(s)}};
+const strip=s=>num(s).x,nz=x=>pl(x).trim();
+const stripT=(s,idx)=>{for(let k=0;k<4;k++){const p=pl(s);let m=p.match(/^\s*[•●○▪■◦·*✓✔►▶]+\s*/)||p.match(/^\s*[–—-]+\s+/)
+  ||p.match(/^\s*[(\[]?([0-9०-९]{1,3}(?:[.\-][0-9०-९]{1,3})*)\s*(?:[.)\]।॥:\/]|[\-–]\s)\s*/)||p.match(/^\s*[(\[]([0-9०-९]{1,3})[)\]]\s*/)
+  ||p.match(/^\s*[(\[]([क-हa-zA-Z]|[ivxIVX]{1,4})[)\]]\s*/)||p.match(/^\s*([क-हa-z]|[ivxIVX]{2,4})[.)]\s+/);
+  if(!m){const b=p.match(/^\s*([0-9०-९]{1,3})\s+/);if(b&&ND(b[1])===String(idx+1))m=b}
+  if(m&&m[0].length<p.length)s=cut(s,m[0].length);else break}return s};
+const isHead=x=>{x=pl(x);return x.length<=70&&!/[।?:;–-]$/.test(x)&&x.split(/\s+/).length<=9};
 const key=s=>pl(s).replace(/[\s:–\-]/g,'');
-
-const RF=/^(तथ्यगतबेहोरा|तथ्यगतखण्ड|तथ्यखण्ड|तथ्य)$/;
-const RH=/^((यसअदालतको)?(ठहर|ठहरखण्ड)|इन्साफ(खण्ड)?)$/;
-const RT=/^तपस[िी]ल(खण्ड)?$/;
-
-const R1='वादी|निवेदक|पुनरावेदक|पुनरावेदिका|जाहेरवाला|उजुरवाला|दरखास्तवाला';
-const R2='प्रतिवादी|विपक्षी|प्रत्यर्थी|प्रत्यर्थिनी|विपक्षिनी';
-const RA=R1+'|'+R2;
-
-const isR1=r=>new RegExp('^('+R1+')$').test(r);
-const ROLEL=new RegExp('^('+RA+')(हरू)?$');
-const DOTR=new RegExp('\\.{3,}\\s*(?:[०-९0-9]{1,3}\\s*)?('+RA+')(हरू)?\\s*$');
-
-const PRE=new RegExp(
-  '^(.*?\\S)[ \\t]*(?:\\t|\\.{2,}|…+|_{2,}|[-–]{3,}|·{2,})'+
-  '[\\s.…_\\-–·\\uE001-\\uE008\\uE100-\\uE2FF]*'+
-  '(?:[०-९0-9]{1,3}[\\s.…_\\-–·]*)?'+
-  '('+RA+')(हरू)?[\\uE001-\\uE008\\uE100-\\uE2FF]*\\s*$'
-);
-
-const dotFix=x=>{
-  const q=pl(x);
-  if(/\.$/.test(q)&&q.replace(/\.$/,'').split(/[\s.]+/).pop().length>=4){
-    return x.replace(/\.([\uE001-\uE008\uE100-\uE2FF]*)$/,'$1');
-  }
-  return x;
-};
-
-const LD='.…_\\-–—―─━═·';
-
-const pClean=x=>{
-  x=x
-    .replace(/\s*।\s*$/,'')
-    .replace(new RegExp(
-      '\\s*['+LD+']{2,}[\\s'+LD+
-      '\\uE001-\\uE008\\uE100-\\uE2FF]*[०-९0-9]{1,3}'+
-      '[\\s।\\uE001-\\uE008\\uE100-\\uE2FF]*$'
-    ),'')
-    .replace(/(?:\s+\.)+[\s\uE001-\uE008\uE100-\uE2FF]*$/,'')
-    .replace(new RegExp(
-      '[\\s'+LD+'\\uE001-\\uE008\\uE100-\\uE2FF]*'+
-      '(?:\\.{2,}|…+|_{2,}|[\\-–—―─━═]+|·{2,})'+
-      '[\\s'+LD+'\\uE001-\\uE008\\uE100-\\uE2FF]*$'
-    ),'');
-  return dotFix(x);
-};
-
-const endP=x=>/[।.]$/.test(pl(x))?x:x+'।';
-
-const pName=x=>{
-  x=pl(x).replace(/[।\s]+$/,'');
-  if(!x)return '';
-  const m=
-    x.match(/^.*वर्ष\s*[०-९0-9]+\s*(?:को|की)\s+(.+)$/)||
-    x.match(/^.*(?:बस्ने|निवासी|बसोबास गर्ने|रहने|रहेको|भएको|जाहेरीले|जाहेरवालाले)\s+(.+)$/);
-  return dotFix((m?m[1]:x.split(/[,，]/).pop()).trim());
-};
-
-function items(a,forceSec,all){
-  const P=a.map(num).filter(p=>nz(p.x));
-  const hasSub=P.some(q=>q.n&&/^\d+\.\d+/.test(q.n));
-  const multi=P.filter(p=>p.n).length>=2;
-  const r=[];
-
-  P.forEach((p,i)=>{
-    const prev=r[r.length-1],k=key(p.x);
-
-    if(all&&!p.n&&(RF.test(k)||RH.test(k)||RT.test(k))){
-      r.push({
-        t:'H',
-        x:RF.test(k)?'तथ्यगत बेहोरा':RT.test(k)?'तपसिल':'यस अदालतको ठहर'
-      });
-      return;
-    }
-
-    if(!p.n&&multi&&prev&&prev.t==='p'&&!/[।?!:–-]\s*$/.test(pl(prev.x))){
-      prev.x+=' '+p.x;
-      return;
-    }
-
-    const nx=P[i+1];
-    const head=all?false:p.n
-      ?forceSec&&/^\d+$/.test(p.n)&&nx&&nx.n&&
-        nx.n.startsWith(p.n+'.')&&isHead(p.x)
-      :isHead(p.x);
-
-    r.push({
-      t:head?'h':'p',
-      x:p.x,
-      top:!!(p.n&&/^\d+$/.test(p.n)&&!head&&hasSub),
-      sub:!!(p.n&&p.n.includes('.')&&prev&&prev.t==='p'),
-      d:p.n?p.n.split('.').length-1:null
-    });
-  });
-
-  return r;
-}
-
+const RF=/^(तथ्यगतबेहोरा|तथ्यगतखण्ड|तथ्यखण्ड|तथ्य)$/,RH=/^((यसअदालतको)?(ठहर|ठहरखण्ड)|इन्साफ(खण्ड)?)$/,RT=/^तपस[िी]ल(खण्ड)?$/;
+const R1='वादी|निवेदक|पुनरावेदक|पुनरावेदिका|जाहेरवाला|उजुरवाला|दरखास्तवाला',R2='प्रतिवादी|विपक्षी|प्रत्यर्थी|प्रत्यर्थिनी|विपक्षिनी',RA=R1+'|'+R2;
+const isR1=r=>new RegExp('^('+R1+')$').test(r),ROLEL=new RegExp('^('+RA+')(हरू)?$'),DOTR=new RegExp('\\.{3,}\\s*(?:[०-९0-9]{1,3}\\s*)?('+RA+')(हरू)?\\s*$');
+const PRE=new RegExp('^(.*?\\S)[ \\t]*(?:\\t|\\.{2,}|…+|_{2,}|[-–]{3,}|·{2,})[\\s.…_\\-–·\\uE001-\\uE008\\uE100-\\uE2FF]*(?:[०-९0-9]{1,3}[\\s.…_\\-–·]*)?('+RA+')(हरू)?[\\uE001-\\uE008\\uE100-\\uE2FF]*\\s*$');
+const dotFix=(x,keep)=>{const q=pl(x);if(/\.$/.test(q)&&q.replace(/\.$/,'').split(/[\s.]+/).pop().length>=4)return keep?x.replace(/\.([\uE001-\uE008\uE100-\uE2FF]*)$/,'$1'):x.replace(/\.([\uE001-\uE008\uE100-\uE2FF]*)$/,'$1');return x};
+const LD='.…_\\-–—―─━═·',pClean=x=>{x=x.replace(/\s*।\s*$/,'').replace(new RegExp('\\s*['+LD+']{2,}[\\s'+LD+'\\uE001-\\uE008\\uE100-\\uE2FF]*[०-९0-9]{1,3}[\\s।\\uE001-\\uE008\\uE100-\\uE2FF]*$'),'').replace(/(?:\s+\.)+[\s\uE001-\uE008\uE100-\uE2FF]*$/,'').replace(new RegExp('[\\s'+LD+'\\uE001-\\uE008\\uE100-\\uE2FF]*(?:\\.{2,}|…+|_{2,}|[\\-–—―─━═]+|·{2,})[\\s'+LD+'\\uE001-\\uE008\\uE100-\\uE2FF]*$'),'');return dotFix(x)},endP=x=>/[।.]$/.test(pl(x))?x:x+'।';
+const pName=x=>{x=pl(x).replace(/[।\s]+$/,'');if(!x)return'';const m=x.match(/^.*वर्ष\s*[०-९0-9]+\s*(?:को|की)\s+(.+)$/)||x.match(/^.*(?:बस्ने|निवासी|बसोबास गर्ने|रहने|रहेको|भएको|जाहेरीले|जाहेरवालाले)\s+(.+)$/);return dotFix((m?m[1]:x.split(/[,，]/).pop()).trim())};
+const HG=[567,680,850,1000,1150,1300],LF=HG.map((_,i)=>HG.slice(0,i+1).reduce((a,b)=>a+b,0)),LT=k=>k?[...Array(k+1)].map((_,i)=>'%'+(i+1)).join('.'):'%1.';
+function parseLine(s){let nonum=false;const hm=pl(s).match(/^\s*#\s*/);if(hm){nonum=true;s=cut(s,hm[0].length)}const sm=pl(s).match(/^\s*(\*{1,6})(?!\*)\s*/);let star=0;if(sm){star=sm[1].length;s=cut(s,sm[0].length)}const r=num(s);return{n:r.n,x:r.x,star,nonum,d:star||(r.n?r.n.split('.').length:0)}}
+function items(a,H,all,base=0){
+ const P=a.map((s,i)=>({...parseLine(s),ln:base+i})).filter(p=>nz(p.x)),hasSub=P.some(q=>q.d>=2&&!q.nonum),multi=P.filter(p=>p.n||p.star||p.nonum).length>=2,r=[];
+ P.forEach((p,i)=>{const prev=r[r.length-1],k=key(p.x),mk=p.n||p.star||p.nonum;
+  if(all&&!mk&&(RF.test(k)||RH.test(k)||RT.test(k))){r.push({t:'H',x:RF.test(k)?'तथ्यगत बेहोरा':RT.test(k)?'तपसिल':'यस अदालतको ठहर',ln:p.ln,n:1});return}
+  if(!mk&&multi&&prev&&prev.t==='p'&&!/[।?!:–-]\s*$/.test(pl(prev.x))){prev.x+=' '+p.x;prev.n++;return}
+  const nx=P[i+1],head=p.nonum||all?false:p.star?H>=1&&p.d===1&&isHead(p.x):p.n?H===1&&p.d===1&&nx&&nx.n&&nx.n.startsWith(p.n+'.')&&isHead(p.x):isHead(p.x);
+  r.push({t:head?'h':'p',x:p.x,depth:p.d,nonum:p.nonum,explicit:!head&&!p.nonum&&p.d>0&&(!!p.star||p.d>=2||hasSub),ln:p.ln,n:1})})
+ return r}
+function lvs(its,sec){let prev=0,seen=false;return its.map(it=>{if(it.t==='H'||it.nonum)return{...it,L:0};
+ if(it.t==='h'){seen=true;if(sec)prev=1;return{...it,L:sec?1:0}}
+ const L=it.explicit?Math.min(it.depth,prev+1):sec?(seen?Math.min(2,prev+1):1):1;if(L)prev=L;return{...it,L}})}
+function lines(text){return text.replace(/^\uFEFF/,'').split(/\r?\n/).map(s=>trimF(norm(s.replace(PRE,'$1 ........ $2$3')))).filter(l=>nz(l))}
 function parse(text,mode){
-  const all=mode==='all';
-  const L=text
-    .replace(/^\uFEFF/,'')
-    .split(/\r?\n/)
-    .map(s=>trimF(norm(s.replace(PRE,'$1 ........ $2$3'))))
-    .filter(l=>nz(l));
-
-  const LP=L.map(pl);
-
-  const find=(re,from=0)=>{
-    for(let i=from;i<L.length;i++){
-      if(re.test(key(L[i])))return i;
-    }
-    return -1;
-  };
-
-  let iF=0,iH=0,iT=0;
-
-  if(!all){
-    iF=find(RF);
-    iH=find(RH,iF+1);
-    iT=find(RT,iH+1);
-
-    if(iF<0||iH<0||iT<0){
-      throw new Error(
-        'Could not find main headings: '+
-        [
-          iF<0&&'तथ्यगत बेहोरा/तथ्य खण्ड',
-          iH<0&&'यस अदालतको ठहर/ठहर खण्ड',
-          iT<0&&'तपसिल/तपसिल खण्ड'
-        ].filter(Boolean).join(', ')+
-        '. Choose "Irrespective" to number without these headings, '+
-        'or "Keep original numbering intact" to retain the input.'
-      );
-    }
-  }
-
-  const iTitle=LP.slice(0,all?30:iF).findIndex(l=>key(l)==='फैसला');
-  const FLD=/^(मुद्दा|रजिष्ट्रेशन|दायरी|फैसला|निर्णय)/;
-  let hEnd=iF;
-
-  if(all){
-    let j=iTitle<0?0:iTitle+1,inP=0,lb=-9;
-    const addr=/बस्ने|निवासी|जिल्ला|गा\.?वि\.?स|नगरपालिका|वडा|रजिष्टर्ड|कार्यालय/;
-
-    while(j<L.length){
-      const l=LP[j];
-
-      if(FLD.test(l)&&/[–-]/.test(l)||/^विरुद्ध$/.test(l)||DOTR.test(l)){
-        j++;
-        continue;
-      }
-      if(ROLEL.test(l)){
-        inP=1;
-        lb=j;
-        j++;
-        continue;
-      }
-      if(/^न्याय प्रशासन|अधिकारक्षेत्र/.test(l)){
-        j++;
-        break;
-      }
-
-      let k=-1;
-      for(let t=j;t<Math.min(j+6,L.length);t++){
-        if(DOTR.test(LP[t])){k=t;break}
-      }
-
-      if(k>=0&&!inP){j=k+1;continue}
-      if(inP&&(j===lb+1||addr.test(l)&&j-lb<7)){j++;continue}
-      break;
-    }
-    hEnd=j;
-  }
-
-  const hd=L.slice(0,hEnd);
-  const top0=iTitle<0?[]:hd.slice(0,iTitle);
-  const iS=top0.findIndex(l=>/^[।॥|]*श्री[।॥|]*$/.test(key(l)));
-  const pre=iS>0?top0.slice(0,iS):[];
-  const top=iS>0?top0.slice(iS):top0;
-  const rest=iTitle<0?hd:hd.slice(iTitle+1);
-
-  let iE=LP.findIndex(
-    (l,i)=>i>(all?hEnd-1:iT)&&/^\(.*\)$|^जिल्ला न्यायाधीश/.test(l)
-  );
-  if(iE<0)iE=L.length;
-
-  let iN=find(/^मस्यौदाअन्तिम|समीक्षाटिप्पणी/,iE);
-  if(iN<0)iN=L.length;
-
-  const lab='मुद्दा नम्बर|रजिष्ट्रेशन नम्बर|दायरी मिति|फैसला मिति|निर्णय नम्बर|मुद्दा(?=\\s*[–-])';
-  const fre=new RegExp(
-    '('+lab+')\\s*[–-]\\s*(.*?)(?=\\s+(?:'+lab+')\\s*[–-]|$)',
-    'g'
-  );
-
-  const fields=[],pv=[],pd=[];
-  let intro='',cur=[],side=null,pvL='',pdL='';
-
-  for(const lf of rest){
-    const l=pl(lf);
-    let m;
-
-    if(FLD.test(l)&&/[–-]/.test(l)){
-      for(const q of l.matchAll(fre)){
-        fields.push(q[1]+'– '+q[2].trim());
-      }
-      continue;
-    }
-
-    if(m=l.match(ROLEL)){
-      if(isR1(m[1])){side=pv;pvL=m[1]}
-      else{side=pd;pdL=m[1]}
-      continue;
-    }
-
-    if(/^विरुद्ध$/.test(l))continue;
-
-    if(/^न्याय प्रशासन|अधिकारक्षेत्र/.test(l)){
-      intro=lf;
-      continue;
-    }
-
-    if(m=l.match(DOTR)){
-      const r1=isR1(m[1]);
-      if(r1)pvL=m[1];
-      else pdL=m[1];
-
-      cur.push(strip(lf.replace(/\s*\.{3,}[^]*$/,'')));
-      (r1?pv:pd).push(...cur);
-      cur=[];
-      continue;
-    }
-
-    if(side)side.push(strip(lf));
-    else cur.push(strip(lf));
-  }
-
-  const fin=a=>a.filter(nz).map(x=>endP(pClean(x)));
-  const forceSec=mode==='sections';
-  const facts=all?[]:items(L.slice(iF+1,iH),forceSec);
-  const holds=all?[]:items(L.slice(iH+1,iT),forceSec);
-  const sec=mode==='sections'||
-    (mode==='auto'&&[...facts,...holds].filter(i=>i.t==='h').length>=2);
-
-  return {
-    pre,
-    extra:cur.filter(nz),
-    top,
-    fields,
-    pv:fin(pv),
-    pd:fin(pd),
-    pvL,
-    pdL,
-    intro,
-    facts,
-    holds,
-    sec,
-    all,
-    body:all?items(L.slice(hEnd,iE),false,true):[],
-    tap:all?[]:L.slice(iT+1,iE)
-      .flatMap(l=>l.split(
-        /(?<=।[\uE001-\uE008\uE100-\uE2FF]*)\s+(?=[\uE001-\uE008\uE100-\uE2FF]*[०-९0-9]{1,2}[.)]\s)/
-      ))
-      .map((l,i)=>stripT(l,i))
-      .filter(nz),
-    close:L.slice(iE,iN),
-    note:L.slice(iN)
-  };
+ const all=mode==='all';
+ const L=lines(text),LP=L.map(pl);
+ const find=(re,from=0)=>{for(let i=from;i<L.length;i++)if(re.test(key(L[i])))return i;return -1};
+ let iF=0,iH=0,iT=0;
+ if(!all){iF=find(RF);iH=find(RH,iF+1);iT=find(RT,iH+1);
+  if(iF<0||iH<0||iT<0)throw new Error('Could not find main headings: '+[iF<0&&'तथ्यगत बेहोरा/तथ्य खण्ड',iH<0&&'यस अदालतको ठहर/ठहर खण्ड',iT<0&&'तपसिल/तपसिल खण्ड'].filter(Boolean).join(', ')+'. Choose the "Irrespective" numbering option to number all paragraphs without these headings.')}
+ const iTitle=LP.slice(0,all?30:iF).findIndex(l=>key(l)==='फैसला'),FLD=/^(मुद्दा|रजिष्ट्रेशन|दायरी|फैसला|निर्णय)/;
+ let hEnd=iF;
+ if(all){let j=iTitle<0?0:iTitle+1,inP=0,lb=-9;const addr=/बस्ने|निवासी|जिल्ला|गा\.?वि\.?स|नगरपालिका|वडा|रजिष्टर्ड|कार्यालय/;
+  while(j<L.length){const l=LP[j];
+   if(FLD.test(l)&&/[–-]/.test(l)||/^विरुद्ध$/.test(l)||DOTR.test(l)){j++;continue}
+   if(ROLEL.test(l)){inP=1;lb=j;j++;continue}
+   if(/^न्याय प्रशासन|अधिकारक्षेत्र/.test(l)){j++;break}
+   let k=-1;for(let t=j;t<Math.min(j+6,L.length);t++)if(DOTR.test(LP[t])){k=t;break}
+   if(k>=0&&!inP){j=k+1;continue}
+   if(inP&&(j===lb+1||addr.test(l)&&j-lb<7)){j++;continue}
+   break}
+  hEnd=j}
+ const hd=L.slice(0,hEnd),top0=iTitle<0?[]:hd.slice(0,iTitle),iS=top0.findIndex(l=>/^[।॥|]*श्री[।॥|]*$/.test(key(l))),pre=iS>0?top0.slice(0,iS):[],top=iS>0?top0.slice(iS):top0,rest=iTitle<0?hd:hd.slice(iTitle+1);
+ let iE=LP.findIndex((l,i)=>i>(all?hEnd-1:iT)&&/^\(.*\)$|^जिल्ला न्यायाधीश/.test(l));if(iE<0)iE=L.length;
+ let iN=find(/^मस्यौदाअन्तिम|समीक्षाटिप्पणी/,iE);if(iN<0)iN=L.length;
+ const lab='मुद्दा नम्बर|रजिष्ट्रेशन नम्बर|दायरी मिति|फैसला मिति|निर्णय नम्बर|मुद्दा(?=\\s*[–-])',fre=new RegExp('('+lab+')\\s*[–-]\\s*(.*?)(?=\\s+(?:'+lab+')\\s*[–-]|$)','g');
+ const fields=[],pv=[],pd=[];let intro='',cur=[],side=null,pvL='',pdL='';
+ for(const lf of rest){const l=pl(lf);let m;
+  if(FLD.test(l)&&/[–-]/.test(l)){for(const q of l.matchAll(fre))fields.push(q[1]+'– '+q[2].trim());continue}
+  if(m=l.match(ROLEL)){if(isR1(m[1])){side=pv;pvL=m[1]}else{side=pd;pdL=m[1]}continue}
+  if(/^विरुद्ध$/.test(l))continue;
+  if(/^न्याय प्रशासन|अधिकारक्षेत्र/.test(l)){intro=lf;continue}
+  if(m=l.match(DOTR)){const r1=isR1(m[1]);if(r1)pvL=m[1];else pdL=m[1];cur.push(strip(lf.replace(/\s*\.{3,}[^]*$/,'')));(r1?pv:pd).push(...cur);cur=[];continue}
+  if(side)side.push(strip(lf));else cur.push(strip(lf));
+ }
+ const fin=a=>a.filter(nz).map(x=>endP(pClean(x)));
+ const fs_=L.slice(iF+1,iH),hs_=L.slice(iH+1,iT);let H=mode==='sections'?1:mode==='auto'?2:0,facts=all?[]:items(fs_,H,false,iF+1),holds=all?[]:items(hs_,H,false,iH+1);
+ const sec=mode==='sections'||(mode==='auto'&&[...facts,...holds].filter(i=>i.t==='h').length>=2);
+ if(mode==='auto'&&!sec&&!all){facts=items(fs_,0,false,iF+1);holds=items(hs_,0,false,iH+1)}
+ return{pre,extra:cur.filter(nz),top,fields,pv:fin(pv),pd:fin(pd),pvL,pdL,intro,facts,holds,sec,all,hasTitle:iTitle>=0,body:all?items(L.slice(hEnd,iE),0,true,hEnd):[],
+  tap:all?[]:L.slice(iT+1,iE).flatMap(l=>l.split(/(?<=।[\uE001-\uE008\uE100-\uE2FF]*)\s+(?=[\uE001-\uE008\uE100-\uE2FF]*[०-९0-9]{1,2}[.)]\s)/)).map((l,i)=>{const hs=pl(l).match(/^\s*#\s*/);return hs?'# '+stripT(cut(l,hs[0].length),i):stripT(l,i)}).filter(l=>nz(l)&&pl(l).replace(/^\s*#\s*/,'').trim()),close:L.slice(iE,iN),note:L.slice(iN)}
 }
-
-function segs(t){
-  const r=[],st=Z0();
-  let cur='';
-
-  const f=()=>{
-    if(cur){
-      r.push({
-        s:cur,
-        b:st.b,
-        u:st.u,
-        i:st.i,
-        c:st.c===null?'':COL[st.c],
-        h:st.h===null?'':HL[st.h]
-      });
-    }
-    cur='';
-  };
-
-  for(const ch of t){
-    const q={...st};
-    if(applyM(q,ch)){
-      f();
-      Object.assign(st,q);
-    }else cur+=ch;
-  }
-
-  f();
-  return r;
-}
-
+function segs(t){const r=[],st=Z0();let cur='';const f=()=>{if(cur)r.push({s:cur,b:st.b,u:st.u,i:st.i,c:st.c===null?'':COL[st.c],h:st.h===null?'':HL[st.h]});cur=''};for(const ch of t){const q={...st};if(applyM(q,ch)){f();Object.assign(st,q)}else cur+=ch}f();return r}
+const shortP=x=>{const n=pName(x);return n.replace(/\(.*?\)/g,' ').replace(/^(श्रीमती|श्रीमान्|श्रीमान|सुश्री|श्री|डा\.|डा)\s+/,'').replace(/\s+/g,' ').replace(/[\s।,]+$/,'').trim()||n};
+function check(m,o){const w=[],need=['निर्णय नम्बर','फैसला मिति','मुद्दा नम्बर','मुद्दा'].filter(k=>!m.fields.some(f=>f.startsWith(k+'–')));
+ if(need.length)w.push('Not found in the header: '+need.join(', ')+'. The footer and the file name use fallbacks for these.');
+ if(!m.pv.length||!m.pd.length)w.push('Party names not found for: '+[!m.pv.length&&'plaintiff side',!m.pd.length&&'opponent side'].filter(Boolean).join(' and ')+'.');
+ if(!m.all&&!m.tap.length)w.push('No तपसिल items were found.');
+ if(!o.some(p=>p.num&&(p.num.ref==='sec'||p.num.ref==='flat')))w.push('No numbered paragraphs were found. Check the headings, or use the Irrespective numbering option.');
+ return w}
 function plan(m){
-  const o=[];
-  const A=(k,t,x={})=>o.push({k,t,...x});
-  const N=(ref,lvl=0)=>({num:{ref,lvl}});
-
-  m.pre.forEach(t=>A('l',t));
-  m.top.forEach(t=>A('c',t,{b:1}));
-  A('c','फैसला',{b:1,u:1});
-  m.fields.forEach(t=>A('c',t,{b:1}));
-
-  A('l',m.pvL||'वादी',{b:1,u:1,sp:1});
-  m.pv.forEach(t=>A('j',t,N('pv')));
-
-  A('l',m.pdL||'प्रतिवादी',{b:1,u:1,sp:1});
-  m.pd.forEach(t=>A('j',t,N('pd')));
-
-  m.extra.forEach(t=>A('j',t));
-  if(m.intro)A('j',m.intro,{sp:1,first:1});
-
-  const LVL=(it,last)=>Math.min(
-    4,
-    m.sec
-      ?Math.min(it.top?0:it.d>=1?it.d:1,last+1)
-      :Math.min(it.d==null?0:it.d,last+1)
-  );
-
-  const part=(title,its)=>{
-    A('h',title,{b:1,u:1,ol:0});
-    let seen=false,last=-1;
-
-    for(const it of its){
-      if(it.t==='h'){
-        seen=true;
-        last=m.sec?0:-1;
-        A(
-          'l',
-          it.x,
-          m.sec
-            ?{b:1,u:1,sp:1,ol:1,...N('sec',0)}
-            :{b:1,sp:1,ol:1}
-        );
-      }else if(m.sec&&!seen){
-        A('j',it.x);
-      }else{
-        const l=LVL(it,last);
-        last=l;
-        A('j',it.x,{...N(m.sec?'sec':'flat',l),ol:l+1});
-      }
-    }
-  };
-
-  if(m.all){
-    let last=-1;
-    m.body.forEach(it=>{
-      if(it.t==='H'){
-        last=-1;
-        A('h',it.x,{b:1,u:1,ol:0});
-      }else{
-        const l=Math.min(4,it.d==null?0:it.d,last+1);
-        last=l;
-        A('j',it.x,{...N('flat',l),ol:l+1});
-      }
-    });
-  }else{
-    part('तथ्यगत बेहोरा',m.facts);
-    part('यस अदालतको ठहर',m.holds);
-    A('h','तपसिल',{b:1,u:1,ol:0});
-    m.tap.forEach(t=>A('j',t,{...N('tap'),ol:1}));
-  }
-
-  m.close.forEach(t=>{
-    if(/^\(.*\)$|^जिल्ला न्यायाधीश/.test(pl(t)))A('r',t);
-    else if(/^फैसला तयार/.test(pl(t)))A('l',t,{b:1,u:1,sp:1});
-    else if(/^इति संवत्/.test(pl(t)))A('l',t,{sp:1});
-    else A('l',t);
-  });
-
-  if(m.note.length){
-    A('pb','');
-    A('h',m.note[0],{b:1,u:1,ol:0});
-    m.note.slice(1).forEach(t=>A('j',t));
-  }
-
-  o.fparties=m.pv[0]&&m.pd[0]
-    ?pName(m.pv[0])+' वि. '+pName(m.pd[0])
-    :pName(m.pv[0]||m.pd[0]||'');
-
-  const fv=k=>(m.fields.find(f=>f.startsWith(k+'–'))||'')
-    .replace(/^[^–]*–\s*/,'');
-
-  o.dn=fv('निर्णय नम्बर');
-  o.dt=fv('फैसला मिति');
-  o.cn=fv('मुद्दा');
-  o.fno=m.fields.find(f=>f.startsWith('मुद्दा नम्बर–'))||'';
-  o.fname=m.fields.find(f=>f.startsWith('मुद्दा–'))||'';
-
-  return o;
+ const o=[],A=(k,t,x={})=>o.push({k,t,...x}),N=(ref,lvl=0)=>({num:{ref,lvl}}),E=it=>({ed:1,ln:it.ln,cnt:it.n});
+ m.pre.forEach(t=>A('l',t));m.top.forEach(t=>A('c',t,{b:1}));A('c','फैसला',{b:1,u:1});m.fields.forEach(t=>A('c',t,{b:1}));
+ A('l',m.pvL||'वादी',{b:1,u:1,sp:1});m.pv.forEach(t=>A('j',t,N('pv')));
+ A('l',m.pdL||'प्रतिवादी',{b:1,u:1,sp:1});m.pd.forEach(t=>A('j',t,N('pd')));
+ m.extra.forEach(t=>A('j',t));if(m.intro)A('j',m.intro,{sp:1,first:1});
+ const part=(title,its)=>{A('h',title,{b:1,u:1,ol:0});lvs(its,m.sec).forEach(it=>{if(it.t==='h')A('l',it.x,{...(m.sec?{b:1,u:1,sp:1,ol:1,...N('sec',0)}:{b:1,sp:1,ol:1}),...E(it)});else if(!it.L)A('j',it.x,E(it));else A('j',it.x,{...N(m.sec?'sec':'flat',it.L-1),ol:it.L,...E(it)})})};
+ if(m.all)lvs(m.body,false).forEach(it=>it.t==='H'?A('h',it.x,{b:1,u:1,ol:0}):A('j',it.x,it.L?{...N('flat',it.L-1),ol:it.L,...E(it)}:E(it)));
+ else{part('तथ्यगत बेहोरा',m.facts);part('यस अदालतको ठहर',m.holds);
+ A('h','तपसिल',{b:1,u:1,ol:0});m.tap.forEach(t=>{const hm=pl(t).match(/^#\s*/);hm?A('j',cut(t,hm[0].length)):A('j',t,{...N('tap'),ol:1})})}
+ m.close.forEach((t,i)=>/^\(.*\)$|^जिल्ला न्यायाधीश/.test(pl(t))?A('r',t):/^फैसला तयार/.test(pl(t))?A('l',t,{b:1,u:1,sp:1}):/^इति संवत्/.test(pl(t))?A('l',t,{sp:1}):A('l',t));
+ if(m.note.length){A('pb','');A('h',m.note[0],{b:1,u:1,ol:0});m.note.slice(1).forEach(t=>A('j',t))}
+ o.fparties=m.pv[0]&&m.pd[0]?shortP(m.pv[0])+' वि. '+shortP(m.pd[0]):shortP(m.pv[0]||m.pd[0]||'');const fv=k=>(m.fields.find(f=>f.startsWith(k+'–'))||'').replace(/^[^–]*–\s*/,'');o.dn=fv('निर्णय नम्बर');o.dt=fv('फैसला मिति');o.cn=fv('मुद्दा');o.fno=m.fields.find(f=>f.startsWith('मुद्दा नम्बर–'))||'';o.fname=m.fields.find(f=>f.startsWith('मुद्दा–'))||'';return o
 }
-
-function labels(o){
-  const c={};
-  return o.map(p=>{
-    if(!p.num)return '';
-    const r=p.num.ref,l=p.num.lvl;
-    const a=c[r]=c[r]||[0,0,0,0,0];
-
-    a[l]++;
-    for(let k=l+1;k<5;k++)a[k]=0;
-
-    return a.slice(0,l+1)
-      .map(n=>$('digits').value==='en'?String(n):dev(n))
-      .join('.')+(l?'':'.');
-  });
-}
-
-function preview(o){
-  $('out').style.fontFamily=
-    `"${$('efont').value}","${$('font').value}","Nirmala UI",sans-serif`;
-
-  const lb=labels(o);
-
-  $('out').innerHTML=o.map((p,i)=>{
-    if(p.k==='pb')return '<hr>';
-
-    const cls=[
-      {c:'c',h:'c',r:'r',j:'j',l:''}[p.k],
-      p.b?'b':'',
-      p.u?'u':'',
-      p.num?'i':''
-    ].filter(Boolean).join(' ');
-
-    const indent=p.num
-      ?` style="padding-left:${3*(p.num.lvl+1)}em"`
-      :'';
-
-    const number=p.num
-      ?`<span class="n" style="font-family:'${$('nfont').value}','Nirmala UI',sans-serif">${lb[i]}</span>`
-      :'';
-
-    const content=segs(p.t).map(g=>
-      (g.b?'<b>':'')+
-      (g.u?'<u>':'')+
-      (g.i?'<i>':'')+
-      (g.c||g.h
-        ?`<span style="${g.c?'color:#'+g.c+';':''}${g.h?'background:#'+hlHex(g.h)+';':''}">${esc(g.s)}</span>`
-        :esc(g.s))+
-      (g.i?'</i>':'')+
-      (g.u?'</u>':'')+
-      (g.b?'</b>':'')
-    ).join('');
-
-    return `<div class="${cls}"${indent}>${number}${p.k==='j'&&p.first?'&emsp;&emsp;':''}${content}</div>`;
-  }).join('')+
-    `<hr><div class="note">Footer: ${
-      [o.fparties,o.fno,o.fname,'पृष्ठ a/b']
-        .filter(Boolean)
-        .map(esc)
-        .join('&emsp;&emsp;')
-    }</div>`;
-}
-
-function outName(o,ext){
-  const L=s=>ND(s||'');
-  const n=(L(o.dn).match(/\d+/)||[])[0];
-  const d=L(o.dt).split(/\D+/).filter(Boolean);
-  const c=(o.cn||'')
-    .replace(/[\\/:*?"<>|\u0000-\u001f]/g,' ')
-    .replace(/\s+/g,' ')
-    .replace(/[\s।.–-]+$/,'')
-    .trim()
-    .slice(0,80);
-
-  const dt=d.length>=3&&d[0].length===4
-    ?d[0]+d[1].padStart(2,'0')+d[2].padStart(2,'0')
-    :d.length===1&&/^\d{8}$/.test(d[0])?d[0]:'';
-
-  if(n&&dt&&c)return 'dn'+n+'.'+dt+'.'+c+'.'+ext;
-  return (ORIG?ORIG.replace(/\.[^.]*$/,''):'judgment_structured')+'.'+ext;
-}
-
-const SNAM=['SecParaTop','SecPara','SecPara3','SecPara4','SecPara5'];
-const FNAM=['FlatPara','FlatSub','FlatSub3','FlatSub4','FlatSub5'];
-const LNAM=['1.','1.1','1.1.1','1.1.1.1','1.1.1.1.1'];
-
+function labels(o){const c={};return o.map(p=>{if(!p.num)return'';const r=p.num.ref,l=p.num.lvl;c[r]=c[r]||[0,0,0,0,0,0];c[r][l]++;for(let k=l+1;k<6;k++)c[r][k]=0;return l?c[r].slice(0,l+1).map(dev).join('.'):dev(c[r][0])+'.'})}
+function preview(o){const lb=labels(o),eds=o.map((p,i)=>p.ed&&p.k==='j'?i:-1);$('out').style.fontFamily=`"${$('font').value}","Nirmala UI",sans-serif`;
+ $('out').innerHTML=o.map((p,i)=>{if(p.k==='pb')return'<hr>';
+  const lv=p.num&&(p.num.ref==='sec'||p.num.ref==='flat')?p.num.lvl+1:0,d=p.ed?`data-ln="${p.ln}" data-cnt="${p.cnt||1}" data-lv="${lv}"`:'',
+  tx=segs(p.t).map(g=>(g.b?'<b>':'')+(g.u?'<u>':'')+(g.i?'<i>':'')+(g.c||g.h?`<span style="${g.c?'color:#'+g.c+';':''}${g.h?'background:#'+hlHex(g.h)+';':''}">${esc(g.s)}</span>`:esc(g.s))+(g.i?'</i>':'')+(g.u?'</u>':'')+(g.b?'</b>':'')).join('');
+  const bt=(a,t,ti,on)=>on?`<button ${d} data-a="${a}" title="${ti}">${t}</button>`:'',canM=p.ed&&p.k==='j'&&eds.slice(0,i).some(j=>j>=0);
+  const ctl=p.ed?'<span class="ctl">'+bt('up','◀','Promote: move to a higher level',lv>1)+bt('dn','▶','Demote: move to a lower level',lv>=1&&lv<6)+bt('nn','#','Numbering on / off for this paragraph',p.k==='j')+bt('mg','⇡','Merge into the previous paragraph',canM)+bt('ed','✎','Edit the text (or double-click it)',1)+'</span>':'';
+  return `<div class="${{c:'c',h:'c',r:'r',j:'j',l:''}[p.k]} ${p.b?'b':''} ${p.u?'u':''} ${p.num?'i':''} ${p.ed?'ed':''}"${p.num?` style="margin-left:${p.num.lvl*1.6}em"`:''}>${p.num&&$('shownum').checked?`<span class="n">${lb[i]}</span>`:''}${p.k==='j'&&p.first?'&emsp;&emsp;':''}<span class="tx" ${d}>${tx}</span>${ctl}</div>`}).join('')+`<hr><div class="note">Footer: ${[o.fparties,o.fno,o.fname,'पृष्ठ ०/०'].filter(Boolean).map(esc).join('&emsp;&emsp;')}</div>`}
+function outName(o,ext){const L=s=>ND(s||''),n=(L(o.dn).match(/\d+/)||[])[0],d=L(o.dt).split(/\D+/).filter(Boolean),c=(o.cn||'').replace(/[\\/:*?"<>|\u0000-\u001f]/g,' ').replace(/\s+/g,' ').replace(/[\s।.–-]+$/,'').trim().slice(0,80);
+ const dt=d.length>=3&&d[0].length===4?d[0]+d[1].padStart(2,'0')+d[2].padStart(2,'0'):d.length===1&&/^\d{8}$/.test(d[0])?d[0]:'';
+ if(n&&dt&&c)return 'dn'+n+'.'+dt+'.'+c+'.'+ext;
+ return (ORIG?ORIG.replace(/\.[^.]*$/,''):'judgment_structured')+'.'+ext}
+function fcols(o){const it=[o.fparties,o.fno,o.fname].filter(Boolean),w=it.map(t=>t.length+6);w.push(18);it.push('पृष्ठ');const S=w.reduce((a,b)=>a+b,0),ws=w.map(x=>Math.round(9616*x/S));ws[ws.length-1]+=9616-ws.reduce((a,b)=>a+b,0);return{items:it,widths:ws}}
 async function build(o,name){
-  const D=docx;
-  const F=$('font').value,E=$('efont').value;
-  const FN={ascii:E,hAnsi:E,cs:F,eastAsia:F};
-  const Z=$('size').value*2,NF=$('nfont').value;
+ const D=docx,F=$('font').value,FN=F,Z=$('size').value*2,NF=$('nfont').value,lvl=(l,t,left,hg=left)=>({level:l,format:'hindiNumbers',text:t,alignment:D.AlignmentType.LEFT,style:{paragraph:{indent:{left,hanging:hg}},run:{font:NF,size:Z}}});
+ const cfg=['pv','pd','tap'].map(r=>({reference:r,levels:[lvl(0,'%1.',567)]}));
+ ['flat','sec'].forEach(r=>cfg.push({reference:r,levels:HG.map((g,k)=>lvl(k,LT(k),LF[k],g))}));
+ const SP={before:0,after:0,line:276,lineRule:'auto'},PS=(id,name,ref,level,ol)=>({id,name,basedOn:'Normal',quickFormat:true,run:{font:FN,size:Z,sizeComplexScript:Z},paragraph:{numbering:{reference:ref,level},outlineLevel:ol,alignment:'both',spacing:SP}});
+ const SI={sec:['SecParaTop','SecPara','SecPara3','SecPara4','SecPara5','SecPara6'],flat:['FlatPara','FlatSub','FlatPara3','FlatPara4','FlatPara5','FlatPara6']},SN=['1.','1.1','1.1.1','1.1.1.1','1.1.1.1.1','1.1.1.1.1.1'],PSL=[];['sec','flat'].forEach(r=>SI[r].forEach((id,k)=>PSL.push(PS(id,(r==='sec'?'Numbered Para ':'Flat Para ')+SN[k],r,k,k+1))));
+ const ST=p=>p.num&&(p.num.ref==='sec'||p.num.ref==='flat')?SI[p.num.ref][p.num.lvl]:undefined;
+ const al={c:'center',h:'center',r:'right',j:'both',l:'left'};
+ const kids=o.map(p=>{
+  if(p.k==='pb')return new D.Paragraph({children:[new D.PageBreak()]});
+  const st=ST(p),runs=segs(p.t).map(g=>{const B=!!(p.b||g.b),U=p.u||g.u;return new D.TextRun({text:g.s,font:FN,size:Z,sizeComplexScript:Z,bold:B,boldComplexScript:B,italics:!!g.i,italicsComplexScript:!!g.i,underline:U?{type:'single'}:undefined,color:g.c||undefined,...(g.h?hlOpt(g.h):{})})});
+  return new D.Paragraph({style:st,children:[...(p.first?[new D.TextRun({text:'\t\t',font:FN})]:[]),...runs],alignment:al[p.k]||'left',keepNext:p.k==='h'||p.k==='l'&&p.b||undefined,
+   outlineLevel:st?undefined:p.ol,spacing:SP,numbering:p.num&&!st?{reference:p.num.ref,level:p.num.lvl}:undefined})});
+ const R=t=>new D.TextRun({text:t,font:FN,size:18,sizeComplexScript:18}),NB='\u00a0',fi=[o.fparties,(o.fno||'').replace(/ /g,NB),(o.fname||'').replace(/ /g,NB)].filter(Boolean);
+ const doc=new D.Document({numbering:{config:cfg},styles:{paragraphStyles:PSL},
+  sections:[{properties:{page:{margin:{top:850,bottom:850,left:1440,right:850,header:340,footer:340}}},footers:{default:new D.Footer({children:[new D.Paragraph({alignment:'center',border:{top:{style:D.BorderStyle.SINGLE,size:4,space:4,color:'000000'}},spacing:{before:0,after:0},children:[...fi.map(t=>R(t+'   ')),new D.TextRun({children:['पृष्ठ'+NB,D.PageNumber.CURRENT,'/',D.PageNumber.TOTAL_PAGES],font:FN,size:18,sizeComplexScript:18})]})]})},children:kids}]});
 
-  const lvl=(l,t,left,hg=left)=>({
-    level:l,
-    format:$('digits').value==='en'?'decimal':'hindiNumbers',
-    text:t,
-    alignment:D.AlignmentType.LEFT,
-    style:{
-      paragraph:{indent:{left,hanging:hg}},
-      run:{font:NF,size:Z}
-    }
-  });
+ const blob=await D.Packer.toBlob(doc);
+ if(window.JSZip)try{const z=await JSZip.loadAsync(await blob.arrayBuffer());for(const n of Object.keys(z.files).filter(n=>/^word\/footer\d*\.xml$/.test(n))){const x=await z.file(n).async('string');z.file(n,x.replace(/>PAGE</g,'>PAGE \\* HINDIARABIC<').replace(/>NUMPAGES</g,'>NUMPAGES \\* HINDIARABIC<'))}return await z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})}catch(e){}
+ return blob}
 
-  const cfg=['pv','pd','tap'].map(r=>({
-    reference:r,
-    levels:[lvl(0,'%1.',567)]
-  }));
-
-  ['flat','sec'].forEach(r=>cfg.push({
-    reference:r,
-    levels:[
-      lvl(0,'%1.',567),
-      lvl(1,'%1.%2',1247,680),
-      lvl(2,'%1.%2.%3',2207,960),
-      lvl(3,'%1.%2.%3.%4',3407,1200),
-      lvl(4,'%1.%2.%3.%4.%5',4857,1450)
-    ]
-  }));
-
-  const SP={before:0,after:0,line:276,lineRule:'auto'};
-
-  const PS=(id,name,ref,level,ol)=>({
-    id,
-    name,
-    basedOn:'Normal',
-    quickFormat:true,
-    run:{font:FN,size:Z,sizeComplexScript:Z},
-    paragraph:{
-      numbering:{reference:ref,level},
-      outlineLevel:ol,
-      alignment:'both',
-      spacing:SP
-    }
-  });
-
-  const ST=p=>p.num&&(p.num.ref==='sec'||p.num.ref==='flat')
-    ?(p.num.ref==='sec'?SNAM[p.num.lvl]:FNAM[p.num.lvl])
-    :undefined;
-
-  const al={c:'center',h:'center',r:'right',j:'both',l:'left'};
-
-  const kids=o.map(p=>{
-    if(p.k==='pb'){
-      return new D.Paragraph({children:[new D.PageBreak()]});
-    }
-
-    const st=ST(p);
-
-    const runs=segs(p.t).map(g=>{
-      const B=!!(p.b||g.b),U=p.u||g.u;
-
-      return new D.TextRun({
-        text:g.s,
-        font:FN,
-        size:Z,
-        sizeComplexScript:Z,
-        bold:B,
-        boldComplexScript:B,
-        italics:!!g.i,
-        italicsComplexScript:!!g.i,
-        underline:U?{type:'single'}:undefined,
-        color:g.c||undefined,
-        ...(g.h?hlOpt(g.h):{})
-      });
-    });
-
-    return new D.Paragraph({
-      style:st,
-      children:[
-        ...(p.first?[new D.TextRun({text:'\t\t',font:FN})]:[]),
-        ...runs
-      ],
-      alignment:al[p.k]||'left',
-      keepNext:p.k==='h'||p.k==='l'&&p.b||undefined,
-      outlineLevel:st?undefined:p.ol,
-      spacing:SP,
-      numbering:p.num&&!st
-        ?{reference:p.num.ref,level:p.num.lvl}
-        :undefined
-    });
-  });
-
-  const R=t=>new D.TextRun({
-    text:t,font:FN,size:18,sizeComplexScript:18
-  });
-
-  const NB='\u00a0';
-  const fi=[
-    o.fparties,
-    (o.fno||'').replace(/ /g,NB),
-    (o.fname||'').replace(/ /g,NB)
-  ].filter(Boolean);
-
-  const doc=new D.Document({
-    numbering:{config:cfg},
-    styles:{
-      default:{document:{run:{font:FN,size:Z,sizeComplexScript:Z}}},
-      paragraphStyles:[
-        ...SNAM.map((id,l)=>PS(id,'Numbered Para '+LNAM[l],'sec',l,l+1)),
-        ...FNAM.map((id,l)=>PS(id,'Flat Para '+LNAM[l],'flat',l,l+1))
-      ]
-    },
-    sections:[{
-      properties:{
-        page:{
-          margin:{
-            top:850,
-            bottom:850,
-            left:1440,
-            right:850,
-            header:340,
-            footer:340
-          }
-        }
-      },
-      footers:{
-        default:new D.Footer({
-          children:[
-            new D.Paragraph({
-              alignment:'center',
-              border:{
-                top:{
-                  style:D.BorderStyle.SINGLE,
-                  size:4,
-                  space:4,
-                  color:'000000'
-                }
-              },
-              spacing:{before:0,after:0},
-              children:[
-                ...fi.map(t=>R(t+'   ')),
-                new D.TextRun({
-                  children:[
-                    'पृष्ठ'+NB,
-                    D.PageNumber.CURRENT,
-                    '/',
-                    D.PageNumber.TOTAL_PAGES
-                  ],
-                  font:FN,
-                  size:18,
-                  sizeComplexScript:18
-                })
-              ]
-            })
-          ]
-        })
-      },
-      children:kids
-    }]
-  });
-
-  return D.Packer.toBlob(doc);
-}
-
-function save(blob,name){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=name;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-}
-
-function run(){
-  $('msg').textContent='';
-  try{
-    ops=plan(parse(
-      FM&&pl(FM)===$('in').value?FM:$('in').value,
-      $('mode').value
-    ));
-    preview(ops);
-    $('dl').disabled=$('dld').disabled=$('rt').disabled=false;
-  }catch(e){
-    ops=null;
-    $('msg').textContent=e.message;
-    $('dl').disabled=$('dld').disabled=$('rt').disabled=true;
-    $('out').innerHTML='';
-  }
-}
-
-function rtf(s){
-  let out='',i=0,st=Z0(),em=Z0(),stk=[],skip=0,ct=[];
-
-  const mt=s.match(/\{\\colortbl([^}]*)\}/);
-  if(mt){
-    const pt=mt[1].split(';');
-    pt.pop();
-    ct=pt.map(e=>{
-      const m=e.match(/\\red(\d+)\\green(\d+)\\blue(\d+)/);
-      return m
-        ?[m[1],m[2],m[3]].map(v=>(+v).toString(16).padStart(2,'0')).join('').toUpperCase()
-        :'';
-    });
-  }
-
-  const DEST=/^\{\\(\*|fonttbl|colortbl|stylesheet|info|listtable|listoverridetable|rsidtbl|pict|header|footer|themedata|colorschememapping|datastore|latentstyles|xmlnstbl|fldinst)/;
-
-  while(i<s.length){
-    const c=s[i];
-
-    if(c==='{'){
-      stk.push([{...st},skip]);
-      if(DEST.test(s.slice(i,i+30)))skip=1;
-      i++;
-    }else if(c==='}'){
-      const t=stk.pop();
-      if(t){st=t[0];skip=t[1]}
-      i++;
-    }else if(c==='\\'){
-      const n=s[i+1];
-
-      if('\\{}'.includes(n)){
-        if(!skip)out+=sync(em,st)+n;
-        i+=2;
-      }else if(n==="'"){
-        i+=4;
-      }else{
-        const m=s.slice(i+1).match(/^([a-z]+)(-?\d+)?[ ]?/i);
-        if(!m){i+=2;continue}
-
-        i+=1+m[0].length;
-        const w=m[1],v=m[2]===undefined?null:+m[2];
-
-        if(w==='par'||w==='line'){
-          if(!skip)out+=sync(em,Z0())+'\n';
-        }else if(w==='tab'){
-          if(!skip)out+=sync(em,st)+' ';
-        }else if(w==='u'&&v!==null){
-          if(!skip){
-            out+=sync(em,st)+String.fromCharCode(v<0?v+65536:v);
-          }
-          if(s[i]==='?')i++;
-        }else if(w==='b')st.b=v===0?0:1;
-        else if(w==='i')st.i=v===0?0:1;
-        else if(w==='ulnone')st.u=0;
-        else if(/^ul/.test(w))st.u=v===0?0:1;
-        else if(w==='cf')st.c=ct[v]&&ct[v]!=='000000'?reg(COL,ct[v]):null;
-        else if(w==='highlight'||w==='chcbpat')st.h=ct[v]?reg(HL,'hex:'+ct[v]):null;
-        else if(w==='plain')st=Z0();
-      }
-    }else if(c==='\n'||c==='\r'){
-      i++;
-    }else{
-      if(!skip)out+=sync(em,st)+c;
-      i++;
-    }
-  }
-
-  return out;
-}
-
-function htmlM(s){
-  const E={nbsp:' ',amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"};
-
-  s=s
-    .replace(/<(strong|b)(\s[^>]*)?>/gi,'\uE001')
-    .replace(/<\/(strong|b)>/gi,'\uE002')
-    .replace(/<u(\s[^>]*)?>/gi,'\uE003')
-    .replace(/<\/u>/gi,'\uE004')
-    .replace(/<(em|i)(\s[^>]*)?>/gi,'\uE005')
-    .replace(/<\/(em|i)>/gi,'\uE006')
-    .replace(/<(br|\/p|\/div|\/h\d|\/li|\/tr|\/td|\/th)[^>]*>/gi,'\n')
-    .replace(/<(style|script)[^]*?<\/\1>/gi,'')
-    .replace(/<[^>]+>/g,'')
-    .replace(
-      /&(#x[0-9a-f]+|#\d+|[a-z]+);/gi,
-      (_,e)=>e[0]==='#'
-        ?String.fromCodePoint(
-          e[1].toLowerCase()==='x'?parseInt(e.slice(2),16):+e.slice(1)
-        )
-        :E[e.toLowerCase()]??''
-    );
-
-  const st=[0,0,0],em=[0,0,0];
-  const M=['\uE001\uE002','\uE003\uE004','\uE005\uE006'];
-  let o='';
-
-  for(const ch of s){
-    const k='\uE001\uE002\uE003\uE004\uE005\uE006'.indexOf(ch);
-
-    if(k>=0){
-      st[k>>1]=k%2===0?1:0;
-    }else if(ch==='\n'){
-      for(let j=0;j<3;j++){
-        if(em[j]){o+=M[j][1];em[j]=0}
-      }
-      o+=ch;
-    }else{
-      for(let j=0;j<3;j++){
-        if(em[j]!==st[j]){
-          o+=M[j][st[j]?0:1];
-          em[j]=st[j];
-        }
-      }
-      o+=ch;
-    }
-  }
-
-  return o;
-}
-
-async function docxM(ab){
-  const z=await JSZip.loadAsync(ab);
-  const part=z.file('word/document.xml');
-  if(!part)throw new Error('This file does not contain a Word document.');
-
-  const x=await part.async('string');
-  const d=new DOMParser().parseFromString(x,'application/xml');
-  const W='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
-
-  const g=(e,n)=>e.getElementsByTagNameNS(W,n)[0];
-  const va=e=>e?(e.getAttributeNS(W,'val')||e.getAttribute('w:val')||''):null;
-  const on=e=>e&&!/^(0|false|off|none)$/i.test(va(e)||'1');
-
-  let out='';
-  const em=Z0();
-
-  for(const p of Array.from(d.getElementsByTagNameNS(W,'p'))){
-    for(const r of Array.from(p.getElementsByTagNameNS(W,'r'))){
-      const pr=Array.from(r.childNodes).find(n=>n.localName==='rPr');
-      const st=Z0();
-
-      if(pr){
-        st.b=on(g(pr,'b'))?1:0;
-        st.u=on(g(pr,'u'))?1:0;
-        st.i=on(g(pr,'i'))?1:0;
-
-        const c=va(g(pr,'color'));
-        if(c&&c!=='auto'&&!/^0+$/.test(c)){
-          st.c=reg(COL,c.toUpperCase());
-        }
-
-        const hl=va(g(pr,'highlight'));
-        const sh=g(pr,'shd');
-        const fl=sh&&(sh.getAttributeNS(W,'fill')||sh.getAttribute('w:fill'));
-
-        if(hl&&hl!=='none')st.h=reg(HL,'name:'+hl);
-        else if(fl&&fl!=='auto'&&!/^f{6}$/i.test(fl)){
-          st.h=reg(HL,'hex:'+fl.toUpperCase());
-        }
-      }
-
-      for(const n of Array.from(r.childNodes)){
-        const t=n.localName==='t'
-          ?n.textContent
-          :n.localName==='tab'
-            ?'\t'
-            :(n.localName==='br'||n.localName==='cr')
-              ?'\n'
-              :n.localName==='noBreakHyphen'?'-':'';
-
-        for(const ch of t){
-          out+=ch==='\n'
-            ?sync(em,Z0())+'\n'
-            :sync(em,st)+ch;
-        }
-      }
-    }
-    out+=sync(em,Z0())+'\n';
-  }
-
-  return out;
-}
-
-function oleDoc(ab){
-  const s=new TextDecoder('utf-16le').decode(ab);
-  const ok=/[\u0900-\u097F]/;
-  const bad=/[^\x20-\x7e\u00a0-\u00ff\u0900-\u097f\u200b-\u200f\u2010-\u201f\u2022\u00d7]/g;
-
-  const ls=s.split(/[\r\x07\x0b]+/)
-    .map(l=>({o:l.trim(),c:l.replace(bad,'').trim()}))
-    .filter(l=>l.c.length>1&&l.c.length/l.o.length>.9);
-
-  const a=ls.findIndex(l=>ok.test(l.c));
-  let b=ls.findIndex(l=>/^फैसला प्रमाणीकरण/.test(l.c));
-  if(b<0)b=ls.map(l=>ok.test(l.c)).lastIndexOf(true);
-
-  return a<0?'':ls.slice(a,b+1).map(l=>l.c).join('\n');
-}
-
-async function readAny(f){
-  SOURCE=null;
-  SOURCE_TEXT=null;
-
-  const ab=await f.arrayBuffer();
-  const u=new Uint8Array(ab);
-  const h=String.fromCharCode(...u.slice(0,8));
-
-  if(h.startsWith('PK')){
-    if(!window.JSZip){
-      throw new Error(
-        'The DOCX library has not loaded. Check your connection and reload.'
-      );
-    }
-
-    let result;
-    try{
-      result=await docxM(ab);
-    }catch(e){
-      result=htmlM((await mammoth.convertToHtml(
-        {arrayBuffer:ab},
-        {styleMap:['u => u','strike => s']}
-      )).value);
-    }
-
-    SOURCE=ab;
-    SOURCE_TEXT=result;
-    return result;
-  }
-
-  if(u[0]===0xD0&&u[1]===0xCF){
-    const t=oleDoc(ab);
-    if(!t){
-      throw new Error(
-        'Could not read this .doc. Please save it as .docx and upload again.'
-      );
-    }
-    return t;
-  }
-
-  let t=u[0]===0xFF&&u[1]===0xFE
-    ?new TextDecoder('utf-16le').decode(ab)
-    :new TextDecoder('utf-8').decode(ab);
-
-  if(h.startsWith('{\\rtf'))return rtf(t);
-  if(/^\s*<(!doctype|html)/i.test(t))return htmlM(t);
-  return t;
-}
-
+function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+let LN=[],ORIGLN=[],HIST=[];
+const setSource=t=>{LN=lines(t);ORIGLN=[...LN];HIST=[]},snap=()=>{HIST.push([...LN]);if(HIST.length>80)HIST.shift()};
+function updBtn(){$('undo').disabled=!HIST.length;$('reset').disabled=!LN.length||LN.join('\n')===ORIGLN.join('\n')}
+function stats(o){const n=o.filter(p=>p.num&&(p.num.ref==='sec'||p.num.ref==='flat')),L=[0,0,0,0,0,0];n.forEach(p=>L[p.num.lvl]++);const s=o.filter(p=>p.k==='l'&&p.b&&p.num&&p.num.ref==='sec').length;
+ $('stats').textContent=n.length+' numbered paragraphs'+(s?' · '+s+' sections':'')+' · levels: '+L.map((c,i)=>c?'L'+(i+1)+'×'+c:'').filter(Boolean).join('  ')}
+function run(){const out=$('out'),sc=out.scrollTop;$('msg').textContent='';
+ if(!LN.length){out.innerHTML='<div class="empty"><b>No file loaded yet.</b><br>Drop a judgment draft above, choose a file, or try an example.</div>';$('stats').textContent='';$('chk').innerHTML='';$('dl').disabled=$('dld').disabled=true;updBtn();return}
+ try{const m=parse(LN.join('\n'),$('mode').value);ops=plan(m);preview(ops);out.scrollTop=sc;stats(ops);$('chk').innerHTML=check(m,ops).map(w=>'<li>'+esc(w)+'</li>').join('');$('dl').disabled=$('dld').disabled=false}
+ catch(e){$('msg').textContent=e.message;$('stats').textContent='';$('chk').innerHTML='';$('dl').disabled=$('dld').disabled=true;out.innerHTML=''}
+ updBtn()}
+function edit(a,ln,cnt,lv){const r=parseLine(LN[ln]),S=n=>'*'.repeat(n)+' ';snap();
+ if(a==='up')LN[ln]=S(Math.max(1,lv-1))+r.x;else if(a==='dn')LN[ln]=S(Math.min(6,lv+1))+r.x;else if(a==='nn')LN[ln]=r.nonum?r.x:'# '+r.x;
+ else if(a==='mg'){const pv=[...ops].reverse().find(p=>p.ed&&p.k==='j'&&p.ln<ln);if(!pv){HIST.pop();return}const pe=pv.ln+(pv.cnt||1)-1,add=[r.x,...LN.slice(ln+1,ln+cnt).map(s=>parseLine(s).x)].join(' ');LN.splice(ln,cnt);LN[pe]=trimF(LN[pe]+' '+add)}
+ run()}
+function startEdit(sp){if(!sp||sp.isContentEditable)return;const ln=+sp.dataset.ln,cnt=+sp.dataset.cnt,orig=sp.textContent;sp.contentEditable='true';sp.classList.add('editing');sp.focus();getSelection().selectAllChildren(sp);
+ const done=ok=>{sp.removeEventListener('blur',ob);sp.removeEventListener('keydown',kd);sp.contentEditable='false';sp.classList.remove('editing');
+  if(ok){const t=sp.textContent.replace(/\s+/g,' ').trim();if(t&&t!==orig.trim()){snap();const r=parseLine(LN[ln]);LN.splice(ln,cnt,(r.nonum?'# ':r.star?'*'.repeat(r.star)+' ':'')+t)}}run()},
+ ob=()=>done(true),kd=e=>{if(e.key==='Enter'){e.preventDefault();sp.blur()}else if(e.key==='Escape'){e.preventDefault();done(false)}};sp.addEventListener('blur',ob);sp.addEventListener('keydown',kd)}
+$('out').addEventListener('click',e=>{const b=e.target.closest('button[data-a]');if(!b)return;if(b.dataset.a==='ed'){startEdit(b.closest('div').querySelector('.tx'));return}edit(b.dataset.a,+b.dataset.ln,+b.dataset.cnt,+b.dataset.lv)});
+$('out').addEventListener('dblclick',e=>startEdit(e.target.closest('.tx[data-ln]')));
+$('undo').onclick=()=>{if(HIST.length){LN=HIST.pop();run()}};$('reset').onclick=()=>{if(LN.join('\n')!==ORIGLN.join('\n')){snap();LN=[...ORIGLN];run()}};
+function rtf(s){let out='',i=0,st=Z0(),em=Z0(),stk=[],skip=0,ct=[];
+ const mt=s.match(/\{\\colortbl([^}]*)\}/);if(mt){const pt=mt[1].split(';');pt.pop();ct=pt.map(e=>{const m=e.match(/\\red(\d+)\\green(\d+)\\blue(\d+)/);return m?[m[1],m[2],m[3]].map(v=>(+v).toString(16).padStart(2,'0')).join('').toUpperCase():''})}
+ const DEST=/^\{\\(\*|fonttbl|colortbl|stylesheet|info|listtable|listoverridetable|rsidtbl|pict|header|footer|themedata|colorschememapping|datastore|latentstyles|xmlnstbl|fldinst)/;
+ while(i<s.length){const c=s[i];
+  if(c==='{'){stk.push([{...st},skip]);if(DEST.test(s.slice(i,i+30)))skip=1;i++}
+  else if(c==='}'){const t=stk.pop();if(t){st=t[0];skip=t[1]}i++}
+  else if(c==='\\'){const n=s[i+1];
+   if('\\{}'.includes(n)){if(!skip){out+=sync(em,st)+n}i+=2}
+   else if(n==="'"){i+=4}
+   else{const m=s.slice(i+1).match(/^([a-z]+)(-?\d+)?[ ]?/i);if(!m){i+=2;continue}i+=1+m[0].length;const w=m[1],v=m[2]===undefined?null:+m[2];
+    if(w==='par'||w==='line'){if(!skip)out+=sync(em,Z0())+'\n'}else if(w==='tab'){if(!skip)out+=sync(em,st)+' '}
+    else if(w==='u'&&v!==null){if(!skip)out+=sync(em,st)+String.fromCharCode(v<0?v+65536:v);if(s[i]==='?')i++}
+    else if(w==='b')st.b=v===0?0:1;else if(w==='i')st.i=v===0?0:1;
+    else if(w==='ulnone')st.u=0;else if(/^ul/.test(w))st.u=v===0?0:1;
+    else if(w==='cf')st.c=ct[v]&&ct[v]!=='000000'?reg(COL,ct[v]):null;
+    else if(w==='highlight'||w==='chcbpat')st.h=ct[v]?reg(HL,'hex:'+ct[v]):null;
+    else if(w==='plain')st=Z0()}}
+  else if(c==='\n'||c==='\r')i++;
+  else{if(!skip)out+=sync(em,st)+c;i++}}
+ return out}
+function htmlM(s){const E={nbsp:' ',amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"};
+ s=s.replace(/<(strong|b)(\s[^>]*)?>/gi,'\uE001').replace(/<\/(strong|b)>/gi,'\uE002').replace(/<u(\s[^>]*)?>/gi,'\uE003').replace(/<\/u>/gi,'\uE004').replace(/<(em|i)(\s[^>]*)?>/gi,'\uE005').replace(/<\/(em|i)>/gi,'\uE006')
+  .replace(/<(br|\/p|\/div|\/h\d|\/li|\/tr|\/td|\/th)[^>]*>/gi,'\n').replace(/<(style|script)[^]*?<\/\1>/gi,'').replace(/<[^>]+>/g,'')
+  .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi,(_,e)=>e[0]==='#'?String.fromCodePoint(e[1].toLowerCase()==='x'?parseInt(e.slice(2),16):+e.slice(1)):E[e.toLowerCase()]??'');
+ const st=[0,0,0],em=[0,0,0],M=['\uE001\uE002','\uE003\uE004','\uE005\uE006'];let o='';
+ for(const ch of s){const k='\uE001\uE002\uE003\uE004\uE005\uE006'.indexOf(ch);
+  if(k>=0)st[k>>1]=k%2===0?1:0;
+  else if(ch==='\n'){for(let j=0;j<3;j++)if(em[j]){o+=M[j][1];em[j]=0}o+=ch}
+  else{for(let j=0;j<3;j++)if(em[j]!==st[j]){o+=M[j][st[j]?0:1];em[j]=st[j]}o+=ch}}
+ return o}
+async function docxM(ab){const z=await JSZip.loadAsync(ab),x=await z.file('word/document.xml').async('string'),d=new DOMParser().parseFromString(x,'application/xml'),W='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+ const g=(e,n)=>e.getElementsByTagNameNS(W,n)[0],va=e=>e?(e.getAttributeNS(W,'val')||e.getAttribute('w:val')||''):null,on=e=>e&&!/^(0|false|off|none)$/i.test(va(e)||'1');
+ let out='';const em=Z0();
+ for(const p of Array.from(d.getElementsByTagNameNS(W,'p'))){
+  for(const r of Array.from(p.getElementsByTagNameNS(W,'r'))){const pr=Array.from(r.childNodes).find(n=>n.localName==='rPr'),st=Z0();
+   if(pr){st.b=on(g(pr,'b'))?1:0;st.u=on(g(pr,'u'))?1:0;st.i=on(g(pr,'i'))?1:0;
+    const c=va(g(pr,'color'));if(c&&c!=='auto'&&!/^0+$/.test(c))st.c=reg(COL,c.toUpperCase());
+    const hl=va(g(pr,'highlight')),sh=g(pr,'shd'),fl=sh&&(sh.getAttributeNS(W,'fill')||sh.getAttribute('w:fill'));
+    if(hl&&hl!=='none')st.h=reg(HL,'name:'+hl);else if(fl&&fl!=='auto'&&!/^f{6}$/i.test(fl))st.h=reg(HL,'hex:'+fl.toUpperCase())}
+   for(const n of Array.from(r.childNodes)){const t=n.localName==='t'?n.textContent:n.localName==='tab'?'\t':(n.localName==='br'||n.localName==='cr')?'\n':n.localName==='noBreakHyphen'?'-':'';
+    for(const ch of t)out+=ch==='\n'?sync(em,Z0())+'\n':sync(em,st)+ch}}
+  out+=sync(em,Z0())+'\n'}
+ return out}
+function oleDoc(ab){const s=new TextDecoder('utf-16le').decode(ab),ok=/[\u0900-\u097F]/,bad=/[^\x20-\x7e\u00a0-\u00ff\u0900-\u097f\u200b-\u200f\u2010-\u201f\u2022\u00d7]/g;
+ const ls=s.split(/[\r\x07\x0b]+/).map(l=>({o:l.trim(),c:l.replace(bad,'').trim()})).filter(l=>l.c.length>1&&l.c.length/l.o.length>.9);
+ const a=ls.findIndex(l=>ok.test(l.c));let b=ls.findIndex(l=>/^फैसला प्रमाणीकरण/.test(l.c));if(b<0)b=ls.map(l=>ok.test(l.c)).lastIndexOf(true);return a<0?'':ls.slice(a,b+1).map(l=>l.c).join('\n')}
+async function readAny(f){const ab=await f.arrayBuffer(),u=new Uint8Array(ab),h=String.fromCharCode(...u.slice(0,8)),x=f.name.split('.').pop().toLowerCase();
+ if(h.startsWith('PK')){if(window.JSZip)try{return await docxM(ab)}catch(e){}}
+ if(h.startsWith('PK'))return htmlM((await mammoth.convertToHtml({arrayBuffer:ab},{styleMap:['u => u','strike => s']})).value);
+ if(u[0]===0xD0&&u[1]===0xCF){const t=oleDoc(ab);if(!t)throw new Error('Could not read this .doc. Please save it as .docx and upload again.');return t}
+ let t=u[0]===0xFF&&u[1]===0xFE?new TextDecoder('utf-16le').decode(ab):new TextDecoder('utf-8').decode(ab);
+ if(h.startsWith('{\\rtf'))return rtf(t);if(/^\s*<(!doctype|html)/i.test(t))return htmlM(t);return t}
 let RECENT=[];
-
-const idb=()=>new Promise((res,rej)=>{
-  const r=indexedDB.open('judgment-recent',1);
-  r.onupgradeneeded=()=>{
-    r.result.createObjectStore('files',{keyPath:'id',autoIncrement:true});
-  };
-  r.onsuccess=()=>res(r.result);
-  r.onerror=()=>rej(r.error);
-});
-
-const idbAll=async()=>{
-  const d=await idb();
-  return new Promise(res=>{
-    const q=d.transaction('files').objectStore('files').getAll();
-    q.onsuccess=()=>{d.close();res(q.result||[])};
-    q.onerror=()=>{d.close();res([])};
-  });
-};
-
-async function idbSave(f){
-  const all=await idbAll();
-  const d=await idb();
-  const tx=d.transaction('files','readwrite');
-  const s=tx.objectStore('files');
-
-  const same=x=>
-    x.name===f.name&&
-    x.size===f.size&&
-    x.lastModified===f.lastModified;
-
-  all.filter(same).forEach(x=>s.delete(x.id));
-
-  s.add({
-    name:f.name,
-    size:f.size,
-    lastModified:f.lastModified,
-    blob:f,
-    t:Date.now()
-  });
-
-  all.filter(x=>!same(x))
-    .sort((a,b)=>b.t-a.t||b.id-a.id)
-    .slice(4)
-    .forEach(x=>s.delete(x.id));
-
-  await new Promise(resolve=>{
-    tx.oncomplete=()=>{d.close();resolve()};
-    tx.onerror=()=>{d.close();resolve()};
-    tx.onabort=()=>{d.close();resolve()};
-  });
-}
-
-function showRecent(){
-  const r=$('rec');
-  r.replaceChildren();
-
-  const o0=document.createElement('option');
-  o0.value='';
-  o0.textContent=RECENT.length
-    ?'Recent files ('+RECENT.length+'/5)'
-    :'Recent files (none)';
-  r.appendChild(o0);
-
-  RECENT.forEach((f,i)=>{
-    const o=document.createElement('option');
-    o.value=i;
-    o.textContent=f.name;
-    r.appendChild(o);
-  });
-
-  r.value='';
-}
-
-async function loadFile(f){
-  $('msg').textContent='';
-  try{
-    ORIG=f.name;
-    FM=await readAny(f);
-    $('in').value=pl(FM);
-    run();
-
-    const k=RECENT.findIndex(x=>
-      x.name===f.name&&
-      x.size===f.size&&
-      x.lastModified===f.lastModified
-    );
-
-    if(k>=0)RECENT.splice(k,1);
-    RECENT.unshift(f);
-    RECENT.length=Math.min(RECENT.length,5);
-    showRecent();
-
-    try{await idbSave(f)}catch(e){}
-  }catch(er){
-    ops=null;
-    $('dl').disabled=$('dld').disabled=$('rt').disabled=true;
-    $('msg').textContent=er.message;
-  }
-}
-
-$('f').onchange=async e=>{
-  const f=e.target.files[0];
-  if(!f)return;
-  await loadFile(f);
-  e.target.value='';
-};
-
-$('rec').onchange=async e=>{
-  if(e.target.value==='')return;
-  const f=RECENT[+e.target.value];
-  e.target.value='';
-  if(f)await loadFile(f);
-};
-
-(async()=>{
-  try{
-    const a=await idbAll();
-    RECENT=a
-      .sort((x,y)=>y.t-x.t||y.id-x.id)
-      .slice(0,5)
-      .map(x=>new File([x.blob],x.name,{lastModified:x.lastModified}));
-    showRecent();
-  }catch(e){}
-})();
-
-function mkRtf(o){
-  const R=['pv','pd','tap','flat','sec'];
-  const LS=Object.fromEntries(R.map((r,i)=>[r,i+1]));
-  const al={c:'\\qc',h:'\\qc',r:'\\qr',j:'\\qj',l:'\\ql'};
-  const HG=[567,680,960,1200,1450];
-  const LF=[567,1247,2207,3407,4857];
-
-  const e=t=>t.split('').map(ch=>{
-    const c=ch.charCodeAt(0);
-    if(ch==='\\'||ch==='{'||ch==='}')return '\\'+ch;
-    if(ch==='\t')return '\\tab ';
-    if(ch==='\n')return '\\line ';
-    return c>127?'\\u'+(c>32767?c-65536:c)+'?':ch;
-  }).join('');
-
-  const lv=(t,n,i,g=i)=>
-    `\\listlevel\\levelnfc0\\levelnfcn0\\leveljc0\\leveljcn0`+
-    `\\levelfollow0\\levelstartat1\\levelspace0\\levelindent0`+
-    `{\\leveltext\\'0${t.replace(/%\d/g,'x').length}${
-      t.replace('%1',"\\'00")
-       .replace('%2',"\\'01")
-       .replace('%3',"\\'02")
-       .replace('%4',"\\'03")
-       .replace('%5',"\\'04")
-    };}{\\levelnumbers${n};}\\f1\\fs${$('size').value*2}\\fi-${g}\\li${i}`;
-
-  const cl=[];
-  const ci=hx=>{
-    let i=cl.indexOf(hx);
-    if(i<0)i=cl.push(hx)-1;
-    return i+1;
-  };
-
-  o.forEach(p=>{
-    if(p.t){
-      segs(p.t).forEach(g=>{
-        if(g.c)ci(g.c);
-        if(g.h)ci(hlHex(g.h));
-      });
-    }
-  });
-
-  const CT='{\\colortbl;'+cl.map(x=>
-    `\\red${parseInt(x.slice(0,2),16)}`+
-    `\\green${parseInt(x.slice(2,4),16)}`+
-    `\\blue${parseInt(x.slice(4),16)};`
-  ).join('')+'}';
-
-  const fi=[
-    o.fparties,
-    (o.fno||'').replace(/ /g,'\u00a0'),
-    (o.fname||'').replace(/ /g,'\u00a0')
-  ].filter(Boolean);
-
-  const fb=fi.map(t=>e(t)+'   ').join('')+
-    e('पृष्ठ\u00a0')+
-    '{\\field{\\*\\fldinst PAGE}{\\fldrslt 1}}/'+
-    '{\\field{\\*\\fldinst NUMPAGES}{\\fldrslt 1}}';
-
-  let s=
-    '{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0'+
-    '{\\fonttbl'+
-    '{\\f0\\fnil\\fcharset0 '+$('font').value+';}'+
-    '{\\f1\\fnil\\fcharset0 '+$('nfont').value+';}'+
-    '{\\f2\\fnil\\fcharset0 '+$('efont').value+';}}'+
-    CT+
-    '{\\*\\listtable'+
-    R.map((r,i)=>
-      `{\\list\\listtemplateid${100+i}\\listhybrid`+
-      `{${lv('%1.',"\\'01",567)}}`+
-      `{${lv('%1.%2',"\\'01\\'03",1247,680)}}`+
-      `{${lv('%1.%2.%3',"\\'01\\'03\\'05",2207,960)}}`+
-      `{${lv('%1.%2.%3.%4',"\\'01\\'03\\'05\\'07",3407,1200)}}`+
-      `{${lv('%1.%2.%3.%4.%5',"\\'01\\'03\\'05\\'07\\'09",4857,1450)}}`+
-      `{\\listname ;}\\listid${1000+i}}`
-    ).join('')+
-    '}{\\*\\listoverridetable'+
-    R.map((r,i)=>
-      `{\\listoverride\\listid${1000+i}\\listoverridecount0\\ls${i+1}}`
-    ).join('')+
-    '}\\viewkind1\\paperw11906\\paperh16838'+
-    '\\margl1440\\margr850\\margt850\\margb850\\headery340\\footery340\n'+
-    '{\\footer\\pard\\plain\\qc\\f2\\af0\\fs18\\afs18'+
-    '\\brdrt\\brdrs\\brdrw10\\brsp60 '+fb+'\\par}\n';
-
-  for(const p of o){
-    if(p.k==='pb'){
-      s+='\\pard\\page\\par\n';
-      continue;
-    }
-
-    const content=segs(p.t).map(g=>{
-      const b=p.b||g.b,u=p.u||g.u;
-      return (g.c?'\\cf'+ci(g.c):'')+
-        (g.h?'\\highlight'+ci(hlHex(g.h)):'')+
-        (b?'\\b':'')+
-        (u?'\\ul':'')+
-        (g.i?'\\i':'')+
-        ' '+e(g.s)+
-        (b?'\\b0':'')+
-        (u?'\\ulnone':'')+
-        (g.i?'\\i0':'')+
-        (g.c?'\\cf0':'')+
-        (g.h?'\\highlight0':'');
-    }).join('');
-
-    s+='\\pard'+
-      (p.ol!==undefined?'\\outlinelevel'+p.ol:'')+
-      (p.num
-        ?`\\ls${LS[p.num.ref]}\\ilvl${p.num.lvl}\\fi-${HG[p.num.lvl]}\\li${LF[p.num.lvl]}`
-        :'')+
-      (al[p.k]||'\\ql')+
-      `\\sb0\\sa0\\sl276\\slmult1\\f2\\af0\\fs${$('size').value*2}`+
-      `\\afs${$('size').value*2} `+
-      (p.first?'\\tab\\tab ':'')+
-      content+'\\par\n';
-  }
-
-  return s+'}';
-}
-
-$('go').onclick=run;
-
-$('mode').onchange=$('font').onchange=$('efont').onchange=
-  ()=>$('in').value&&run();
-
-$('rt').onclick=()=>{
-  if(!ops)return;
-  const lb=labels(ops);
-  const t=ops.map((p,i)=>
-    p.k==='pb'
-      ?null
-      :(p.num&&p.k!=='l'?lb[i]+' ':'')+p.t
-  ).filter(x=>x!==null).join('\n');
-
-  FM=t;
-  $('in').value=pl(t);
-  run();
-};
-
-$('dl').onclick=async()=>{
-  if(ops)save(await build(ops),outName(ops,'docx'));
-};
-
-$('dld').onclick=()=>{
-  if(ops){
-    save(
-      new Blob([mkRtf(ops)],{type:'application/msword'}),
-      outName(ops,'doc')
-    );
-  }
-};
-
-$('dlin').onclick=()=>{
-  save(
-    new Blob([$('in').value],{type:'text/plain;charset=utf-8'}),
-    'judgment_input.txt'
-  );
-};
-
-const ex=(b,t,n)=>{
-  SOURCE=null;
-  SOURCE_TEXT=null;
-  FM=null;
-  ORIG='';
-  $('in').value=t;
-  $('mode').value='auto';
-  run();
-};
-
-$('e1').onclick=()=>ex(0,EX1);
-$('e2').onclick=()=>ex(0,EX2);
-
-const rawDoc=async t=>docx.Packer.toBlob(new docx.Document({
-  sections:[{
-    children:t.split('\n').map(l=>new docx.Paragraph({
-      children:[new docx.TextRun({
-        text:l,
-        font:'Nirmala UI',
-        size:26
-      })]
-    }))
-  }]
-}));
-
-$('e1d').onclick=async()=>{
-  save(await rawDoc(EX1),'example1_input.docx');
-};
-
-$('e2d').onclick=async()=>{
-  save(await rawDoc(EX2),'example2_input.docx');
-};
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('judgment-recent',1);r.onupgradeneeded=()=>r.result.createObjectStore('files',{keyPath:'id',autoIncrement:true});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const idbAll=async()=>{const d=await idb();return new Promise(res=>{const q=d.transaction('files').objectStore('files').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})};
+async function idbSave(f){const d=await idb(),all=await idbAll(),tx=d.transaction('files','readwrite'),s=tx.objectStore('files'),same=x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified;
+ all.filter(same).forEach(x=>s.delete(x.id));s.add({name:f.name,size:f.size,lastModified:f.lastModified,blob:f,t:Date.now()});
+ all.filter(x=>!same(x)).sort((a,b)=>b.t-a.t).slice(2).forEach(x=>s.delete(x.id));await new Promise(r=>{tx.oncomplete=r;tx.onerror=r})}
+function showRecent(){const r=$('rec');r.replaceChildren();const o0=document.createElement('option');o0.value='';o0.textContent=RECENT.length?'Recent files ('+RECENT.length+')':'Recent files (none)';r.appendChild(o0);
+ RECENT.forEach((f,i)=>{const o=document.createElement('option');o.value=i;o.textContent=f.name;r.appendChild(o)});r.value=''}
+async function loadFile(f){$('msg').textContent='';try{ORIG=f.name;setSource(await readAny(f));run();
+ const k=RECENT.findIndex(x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified);if(k>=0)RECENT.splice(k,1);RECENT.unshift(f);RECENT.length=Math.min(RECENT.length,3);showRecent();
+ try{await idbSave(f)}catch(e){}}catch(er){$('msg').textContent=er.message}}
+$('f').onchange=async e=>{const f=e.target.files[0];if(!f)return;await loadFile(f);e.target.value=''};
+$('rec').onchange=async e=>{const f=RECENT[+e.target.value];e.target.value='';if(f)await loadFile(f)};
+(async()=>{try{const a=await idbAll();RECENT=a.sort((x,y)=>y.t-x.t).slice(0,3).map(x=>new File([x.blob],x.name,{lastModified:x.lastModified}));showRecent()}catch(e){}})();
+function mkRtf(o){const R=['pv','pd','tap','flat','sec'],LS=Object.fromEntries(R.map((r,i)=>[r,i+1])),al={c:'\\qc',h:'\\qc',r:'\\qr',j:'\\qj',l:'\\ql'};
+ const e=t=>[...t].map(ch=>{const c=ch.charCodeAt(0);return ch==='\\'||ch==='{'||ch==='}'?'\\'+ch:c>127?'\\u'+(c>32767?c-65536:c)+'?':ch}).join('');
+ const hx=n=>n.toString(16).padStart(2,'0'),lvk=k=>{const t=k?[...Array(k+1)].map((_,i)=>"\\'"+hx(i)).join('.'):"\\'00.",len=k?2*k+1:2,nums=[...Array(k+1)].map((_,i)=>"\\'"+hx(2*i+1)).join('');return `\\listlevel\\levelnfc0\\levelnfcn0\\leveljc0\\leveljcn0\\levelfollow0\\levelstartat1\\levelspace0\\levelindent0{\\leveltext\\'${hx(len)}${t};}{\\levelnumbers${nums};}\\f1\\fs${$('size').value*2}\\fi-${HG[k]}\\li${LF[k]}`};
+ const cl=[],ci=hx=>{let i=cl.indexOf(hx);if(i<0)i=cl.push(hx)-1;return i+1};o.forEach(p=>{if(p.t)segs(p.t).forEach(g=>{if(g.c)ci(g.c);if(g.h)ci(hlHex(g.h))})});
+ const CT='{\\colortbl;'+cl.map(x=>`\\red${parseInt(x.slice(0,2),16)}\\green${parseInt(x.slice(2,4),16)}\\blue${parseInt(x.slice(4),16)};`).join('')+'}';const fi=[o.fparties,(o.fno||'').replace(/ /g,'\u00a0'),(o.fname||'').replace(/ /g,'\u00a0')].filter(Boolean),fb=fi.map(t=>e(t)+'   ').join('')+e('पृष्ठ\u00a0')+'{\\field{\\*\\fldinst PAGE \\\\* HINDIARABIC}{\\fldrslt 1}}/{\\field{\\*\\fldinst NUMPAGES \\\\* HINDIARABIC}{\\fldrslt 1}}';
+ let s='{\\rtf1\\ansi\\ansicpg1252\\uc1\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 '+$('font').value+';}{\\f1\\fnil\\fcharset0 '+$('nfont').value+';}}'+CT+'{\\*\\listtable'+R.map((r,i)=>`{\\list\\listtemplateid${100+i}\\listhybrid${[0,1,2,3,4,5].map(k=>'{'+lvk(k)+'}').join('')}{\\listname ;}\\listid${1000+i}}`).join('')+'}{\\*\\listoverridetable'+R.map((r,i)=>`{\\listoverride\\listid${1000+i}\\listoverridecount0\\ls${i+1}}`).join('')+'}\\viewkind1\\paperw11906\\paperh16838\\margl1440\\margr850\\margt850\\margb850\\headery340\\footery340\n{\\footer\\pard\\plain\\qc\\f0\\fs18\\brdrt\\brdrs\\brdrw10\\brsp60 '+fb+'\\par}\n';
+ for(const p of o){if(p.k==='pb'){s+='\\pard\\page\\par\n';continue}
+  s+='\\pard'+(p.ol!==undefined?'\\outlinelevel'+p.ol:'')+(p.num?`\\ls${LS[p.num.ref]}\\ilvl${p.num.lvl}\\fi-${HG[p.num.lvl]}\\li${LF[p.num.lvl]}`:'')+(al[p.k]||'\\ql')+`\\sb0\\sa0\\sl276\\slmult1\\f0\\fs${$('size').value*2} ${p.first?'\\tab\\tab ':''}${segs(p.t).map(g=>{const b=p.b||g.b,u=p.u||g.u;return(g.c?'\\cf'+ci(g.c):'')+(g.h?'\\highlight'+ci(hlHex(g.h)):'')+(b?'\\b':'')+(u?'\\ul':'')+(g.i?'\\i':'')+' '+e(g.s)+(b?'\\b0':'')+(u?'\\ulnone':'')+(g.i?'\\i0':'')+(g.c?'\\cf0':'')+(g.h?'\\highlight0':'')}).join('')}\\par\n`}
+ return s+'}'}
+const SETK=['mode','font','nfont','size'],saveSet=()=>{try{localStorage.setItem('jset',JSON.stringify({...Object.fromEntries(SETK.map(k=>[k,$(k).value])),shownum:$('shownum').checked?'1':'0'}))}catch(e){}};
+try{const s=JSON.parse(localStorage.getItem('jset')||'{}');SETK.forEach(k=>{if(s[k]&&[...$(k).options].some(o=>o.value===s[k]))$(k).value=s[k]});if(s.shownum==='0')$('shownum').checked=false}catch(e){}
+SETK.forEach(k=>$(k).onchange=()=>{saveSet();run()});$('shownum').onchange=()=>{saveSet();run()};
+$('dl').onclick=async()=>save(await build(ops),outName(ops,'docx'));
+$('dld').onclick=()=>save(new Blob([mkRtf(ops)],{type:'application/msword'}),outName(ops,'doc'));
+const ex=t=>{ORIG='';setSource(t);$('mode').value='auto';run()};
+const dz=$('drop');['dragenter','dragover'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.add('on')}));['dragleave','drop'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.remove('on')}));dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f)});
+$('e1').onclick=()=>ex(EX1);$('e2').onclick=()=>ex(EX2);
+const rawDoc=async t=>docx.Packer.toBlob(new docx.Document({sections:[{children:t.split('\n').map(l=>new docx.Paragraph({children:[new docx.TextRun({text:l,font:'Nirmala UI',size:26})]}))}]}));
+$('e1d').onclick=async()=>save(await rawDoc(EX1),'example1_input.docx');$('e2d').onclick=async()=>save(await rawDoc(EX2),'example2_input.docx');
+run();
 </script>
-
-<script src="upgrade.js"></script>
 </body>
 </html>
