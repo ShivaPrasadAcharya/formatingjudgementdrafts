@@ -41,6 +41,7 @@ h2{font-size:12px;font-weight:600;margin:0;color:var(--mut);letter-spacing:.04em
 #out div.ed:hover{background:var(--card)}#out div.ed .tx{cursor:text}.ctl{display:none;position:absolute;right:0;top:-4px;gap:2px;background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:2;text-indent:0}
 #out div.ed:hover .ctl,#out div.ed:focus-within .ctl{display:inline-flex}.ctl button{padding:1px 7px;font-size:13px;border-radius:6px;line-height:1.5}
 .tx.editing{outline:2px solid var(--ac);background:var(--pn);padding:0 3px;border-radius:3px;cursor:text}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;border:1px solid var(--bd)}.sw.r{background:#e02020}.sw.k{background:#000}
 .empty{color:var(--mut);padding:56px 12px;text-align:center}
 .note{font-size:13px;color:var(--mut)}footer.note{margin-top:4px;line-height:1.6}
 </style>
@@ -66,7 +67,7 @@ h2{font-size:12px;font-weight:600;margin:0;color:var(--mut);letter-spacing:.04em
  <div id="msg"></div>
 </section>
 <section class="panel">
- <div class="ph"><h2>Output preview</h2><label class="ck" title="Show the numbers as they will appear in the downloaded file"><input type="checkbox" id="shownum" checked> Show numbering in preview</label><span class="note"><b>Click inside a paragraph</b> to place the cursor and edit (Enter = done, Esc = cancel). Hover a paragraph: ◀ ▶ change its level · # numbering on/off · ⇡ merge up · ✂ split at the cursor · ✎ edit all (or double-click). Put <b>#</b> at the start of a line in your file for an unnumbered paragraph, <b>*</b> / <b>**</b> / <b>***</b> to set its level.</span></div>
+ <div class="ph"><h2>Output preview</h2><label class="ck" title="Show the numbers as they will appear in the downloaded file"><input type="checkbox" id="shownum" checked> Show numbering in preview</label><span class="note"><b>Click inside a paragraph</b> to place the cursor and edit (Enter = done, Esc = cancel). Hover a paragraph: ◀ ▶ change its level · # numbering on/off · ⇡ merge up · ✂ split at the cursor · red / black squares colour the selected text · ✎ edit all (or double-click). Put <b>#</b> at the start of a line in your file for an unnumbered paragraph, <b>*</b> / <b>**</b> / <b>***</b> to set its level.</span></div>
  <p class="stats" id="stats"></p><ul class="chk" id="chk"></ul>
  <div id="out"></div>
 </section>
@@ -255,7 +256,7 @@ function preview(o){const lb=labels(o),eds=o.map((p,i)=>p.ed&&p.k==='j'?i:-1);$(
   const lv=p.num&&(p.num.ref==='sec'||p.num.ref==='flat')?p.num.lvl+1:0,d=p.ed?`data-ln="${p.ln}" data-cnt="${p.cnt||1}" data-lv="${lv}"`:'',
   tx=segs(p.t).map(g=>(g.b?'<b>':'')+(g.u?'<u>':'')+(g.i?'<i>':'')+(g.c||g.h?`<span style="${g.c?'color:#'+g.c+';':''}${g.h?'background:#'+hlHex(g.h)+';':''}">${esc(g.s)}</span>`:esc(g.s))+(g.i?'</i>':'')+(g.u?'</u>':'')+(g.b?'</b>':'')).join('');
   const bt=(a,t,ti,on)=>on?`<button ${d} data-a="${a}" title="${ti}">${t}</button>`:'',canM=p.ed&&p.k==='j'&&eds.slice(0,i).some(j=>j>=0),canS=p.ed&&p.k==='j';
-  const ctl=p.ed?'<span class="ctl">'+bt('up','◀','Promote: move to a higher level',lv>1)+bt('dn','▶','Demote: move to a lower level',lv>=1&&lv<6)+bt('nn','#','Numbering on / off for this paragraph',p.k==='j')+bt('mg','⇡','Merge into the previous paragraph',canM)+bt('sp','✂','Split this paragraph at the cursor (click in the text first to place the cursor)',canS)+bt('ed','✎','Edit the text (or double-click it)',1)+'</span>':'';
+  const ctl=p.ed?'<span class="ctl">'+bt('up','◀','Promote: move to a higher level',lv>1)+bt('dn','▶','Demote: move to a lower level',lv>=1&&lv<6)+bt('nn','#','Numbering on / off for this paragraph',p.k==='j')+bt('mg','⇡','Merge into the previous paragraph',canM)+bt('sp','✂','Split this paragraph at the cursor (click in the text first to place the cursor)',canS)+bt('cr','<span class="sw r"></span>','Colour the selected text red (select text first)',1)+bt('cb','<span class="sw k"></span>','Colour the selected text black (select text first)',1)+bt('ed','✎','Edit the text (or double-click it)',1)+'</span>':'';
   return `<div class="${{c:'c',h:'c',r:'r',j:'j',l:''}[p.k]} ${p.b?'b':''} ${p.u?'u':''} ${p.num?'i':''} ${p.ed?'ed':''}"${p.num?` style="margin-left:${p.num.lvl*1.6}em"`:''}>${p.num&&$('shownum').checked?`<span class="n">${lb[i]}</span>`:''}${p.k==='j'&&p.first?'&emsp;&emsp;':''}<span class="tx" ${d}>${tx}</span>${ctl}</div>`}).join('')+`<hr><div class="note">Footer: ${[o.fparties,o.fno,o.fname,'पृष्ठ ०/०'].filter(Boolean).map(esc).join('&emsp;&emsp;')}</div>`}
 function outName(o,ext){const L=s=>ND(s||''),n=(L(o.dn).match(/\d+/)||[])[0],d=L(o.dt).split(/\D+/).filter(Boolean),c=(o.cn||'').replace(/[\\/:*?"<>|\u0000-\u001f]/g,' ').replace(/\s+/g,' ').replace(/[\s।.–-]+$/,'').trim().slice(0,80);
  const dt=d.length>=3&&d[0].length===4?d[0]+d[1].padStart(2,'0')+d[2].padStart(2,'0'):d.length===1&&/^\d{8}$/.test(d[0])?d[0]:'';
@@ -327,9 +328,23 @@ function splitPara(sp){const msg=t=>{$('msg').textContent=t},sel=getSelection();
  const r=parseLine(LN[ln]),pp=pl(LN[ln]),pre=pp.slice(0,Math.max(0,pp.length-pl(r.x).length)).replace(/^\s*\uE009\s*/,'');
  if(ACT)ACT.off();snap();LN.splice(ln,cnt,BRK+pre+a,BRK+pre+b);run();
  const nt=$('out').querySelector('.tx[data-ln="'+(ln+1)+'"]');if(nt)startEdit(nt,'start')}
-$('out').addEventListener('mousedown',e=>{if(e.target.closest('button[data-a="sp"]'))e.preventDefault()});
+/* colour the selected text: ci = palette index (red) or null (black = default colour). Existing colour markers inside the selection are replaced; the colour after the selection is restored. */
+function colorAt(s,a,b,ci){const mk=c=>c===null?'\uE007':String.fromCharCode(0xE100+c),st=Z0();let o='',n=0,inR=false;
+ for(const ch of s){if(!applyM(st,ch)){if(!inR&&n===a){o+=mk(ci);inR=true}if(inR&&n===b){o+=mk(st.c);inR=false}o+=ch;n++;continue}
+  const c=ch.charCodeAt(0);if(inR&&(ch==='\uE007'||(c>=0xE100&&c<0xE200)))continue;o+=ch}
+ if(inR)o+=mk(st.c);return o}
+function colorSel(sp,hex){const msg=t=>{$('msg').textContent=t},sel=getSelection(),hint='Select some text inside the paragraph first, then press a colour square.';
+ if(!sp||!sel.rangeCount||sel.isCollapsed){msg(hint);return}
+ const sr=sel.getRangeAt(0);if(!sp.contains(sr.startContainer)||!sp.contains(sr.endContainer)){msg(hint);return}
+ const off=(nd,o)=>{const r=document.createRange();r.selectNodeContents(sp);r.setEnd(nd,o);return r.toString().length},a=off(sr.startContainer,sr.startOffset),b=off(sr.endContainer,sr.endOffset);
+ if(a>=b){msg(hint);return}
+ const ci=hex?reg(COL,hex):null;if(hex&&ci===null){msg('Colour palette is full.');return}
+ const ln=+sp.dataset.ln,cnt=+sp.dataset.cnt,cur=sp.textContent,p=ops.find(q=>q.ed&&q.ln===ln),base=p&&cur===pl(p.t)?p.t:cur,nt=trimF(colorAt(base,a,b,ci));
+ const r=parseLine(LN[ln]),pp=pl(LN[ln]),pre=pp.slice(0,Math.max(0,pp.length-pl(r.x).length)).replace(/^\s*\uE009\s*/,'');
+ if(ACT)ACT.off();snap();LN.splice(ln,cnt,(r.brk?BRK:'')+pre+nt);run()}
+$('out').addEventListener('mousedown',e=>{if(e.target.closest('button[data-a="sp"],button[data-a="cr"],button[data-a="cb"]'))e.preventDefault()});
 $('out').addEventListener('click',e=>{const b=e.target.closest('button[data-a]');
- if(b){if(b.dataset.a==='ed'){startEdit(b.closest('div').querySelector('.tx'));return}if(b.dataset.a==='sp'){splitPara(b.closest('div').querySelector('.tx'));return}edit(b.dataset.a,+b.dataset.ln,+b.dataset.cnt,+b.dataset.lv);return}
+ if(b){if(b.dataset.a==='ed'){startEdit(b.closest('div').querySelector('.tx'));return}if(b.dataset.a==='sp'){splitPara(b.closest('div').querySelector('.tx'));return}if(b.dataset.a==='cr'||b.dataset.a==='cb'){colorSel(b.closest('div').querySelector('.tx'),b.dataset.a==='cr'?'FF0000':null);return}edit(b.dataset.a,+b.dataset.ln,+b.dataset.cnt,+b.dataset.lv);return}
  const t=e.target.closest('.tx[data-ln]');if(t&&!t.isContentEditable&&getSelection().isCollapsed)startEdit(t,{x:e.clientX,y:e.clientY})});
 $('out').addEventListener('dblclick',e=>startEdit(e.target.closest('.tx[data-ln]')));
 $('undo').onclick=()=>{if(HIST.length){LN=HIST.pop();run()}};$('reset').onclick=()=>{if(LN.join('\n')!==ORIGLN.join('\n')){snap();LN=[...ORIGLN];run()}};
@@ -390,15 +405,15 @@ const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('judgment-recent',1
 const idbAll=async()=>{const d=await idb();return new Promise(res=>{const q=d.transaction('files').objectStore('files').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>res([])})};
 async function idbSave(f){const d=await idb(),all=await idbAll(),tx=d.transaction('files','readwrite'),s=tx.objectStore('files'),same=x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified;
  all.filter(same).forEach(x=>s.delete(x.id));s.add({name:f.name,size:f.size,lastModified:f.lastModified,blob:f,t:Date.now()});
- all.filter(x=>!same(x)).sort((a,b)=>b.t-a.t).slice(2).forEach(x=>s.delete(x.id));await new Promise(r=>{tx.oncomplete=r;tx.onerror=r})}
+ all.filter(x=>!same(x)).sort((a,b)=>b.t-a.t).slice(4).forEach(x=>s.delete(x.id));await new Promise(r=>{tx.oncomplete=r;tx.onerror=r})}
 function showRecent(){const r=$('rec');r.replaceChildren();const o0=document.createElement('option');o0.value='';o0.textContent=RECENT.length?'Recent files ('+RECENT.length+')':'Recent files (none)';r.appendChild(o0);
  RECENT.forEach((f,i)=>{const o=document.createElement('option');o.value=i;o.textContent=f.name;r.appendChild(o)});r.value=''}
 async function loadFile(f){$('msg').textContent='';try{ORIG=f.name;setSource(await readAny(f));run();
- const k=RECENT.findIndex(x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified);if(k>=0)RECENT.splice(k,1);RECENT.unshift(f);RECENT.length=Math.min(RECENT.length,3);showRecent();
+ const k=RECENT.findIndex(x=>x.name===f.name&&x.size===f.size&&x.lastModified===f.lastModified);if(k>=0)RECENT.splice(k,1);RECENT.unshift(f);RECENT.length=Math.min(RECENT.length,5);showRecent();
  try{await idbSave(f)}catch(e){}}catch(er){$('msg').textContent=er.message}}
 $('f').onchange=async e=>{const f=e.target.files[0];if(!f)return;await loadFile(f);e.target.value=''};
 $('rec').onchange=async e=>{const f=RECENT[+e.target.value];e.target.value='';if(f)await loadFile(f)};
-(async()=>{try{const a=await idbAll();RECENT=a.sort((x,y)=>y.t-x.t).slice(0,3).map(x=>new File([x.blob],x.name,{lastModified:x.lastModified}));showRecent()}catch(e){}})();
+(async()=>{try{const a=await idbAll();RECENT=a.sort((x,y)=>y.t-x.t).slice(0,5).map(x=>new File([x.blob],x.name,{lastModified:x.lastModified}));showRecent()}catch(e){}})();
 function mkRtf(o){const R=['pv','pd','tap','flat','sec'],LS=Object.fromEntries(R.map((r,i)=>[r,i+1])),al={c:'\\qc',h:'\\qc',r:'\\qr',j:'\\qj',l:'\\ql'};
  const e=t=>[...t].map(ch=>{const c=ch.charCodeAt(0);return ch==='\\'||ch==='{'||ch==='}'?'\\'+ch:c>127?'\\u'+(c>32767?c-65536:c)+'?':ch}).join('');
  const hx=n=>n.toString(16).padStart(2,'0'),lvk=k=>{const t=k?[...Array(k+1)].map((_,i)=>"\\'"+hx(i)).join('.'):"\\'00.",len=k?2*k+1:2,nums=[...Array(k+1)].map((_,i)=>"\\'"+hx(2*i+1)).join('');return `\\listlevel\\levelnfc0\\levelnfcn0\\leveljc0\\leveljcn0\\levelfollow0\\levelstartat1\\levelspace0\\levelindent0{\\leveltext\\'${hx(len)}${t};}{\\levelnumbers${nums};}\\f1\\fs${$('size').value*2}\\fi-${HG[k]}\\li${LF[k]}`};
