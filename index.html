@@ -68,7 +68,7 @@ h2{font-size:12px;font-weight:600;margin:0;color:var(--mut);letter-spacing:.04em
  <div id="msg"></div>
 </section>
 <section class="panel">
- <div class="ph"><h2>Output preview</h2><label class="ck" title="Show the numbers as they will appear in the downloaded file"><input type="checkbox" id="shownum" checked> Show numbering in preview</label><span class="clr" title="Select any text in the preview, then press a colour">Colour selected text <button type="button" id="cr" title="Colour the selected text red"><span class="sw r"></span></button><button type="button" id="cb" title="Colour the selected text black (default colour)"><span class="sw k"></span></button></span><span class="note"><b>Click inside a paragraph</b> to place the cursor and edit (Enter = done, Esc = cancel). Hover a paragraph: ◀ ▶ change its level · # numbering on/off · ⇡ merge up · ✂ split at the cursor · red / black squares colour the selected text · ✎ edit all (or double-click). Put <b>#</b> at the start of a line in your file for an unnumbered paragraph, <b>*</b> / <b>**</b> / <b>***</b> to set its level.</span></div>
+ <div class="ph"><h2>Output preview</h2><label class="ck" title="Show the numbers as they will appear in the downloaded file"><input type="checkbox" id="shownum" checked> Show numbering in preview</label><span class="clr"><button type="button" id="u2" title="Undo the last change (up to 12)" disabled>↶ Undo</button><button type="button" id="r2" title="Redo the change you undid" disabled>↷ Redo</button></span><span class="clr" title="Select any text in the preview, then press a colour">Colour selected text <button type="button" id="cr" title="Colour the selected text red"><span class="sw r"></span></button><button type="button" id="cb" title="Colour the selected text black (default colour)"><span class="sw k"></span></button></span><span class="note"><b>Click inside a paragraph</b> to place the cursor and edit (Enter = done, Esc = cancel). Hover a paragraph: ◀ ▶ change its level · # numbering on/off · ⇡ merge up · ✂ split at the cursor · red / black squares colour the selected text · ✎ edit all (or double-click). Put <b>#</b> at the start of a line in your file for an unnumbered paragraph, <b>*</b> / <b>**</b> / <b>***</b> to set its level.</span></div>
  <p class="stats" id="stats"></p><ul class="chk" id="chk"></ul>
  <div id="out"></div>
 </section>
@@ -286,9 +286,9 @@ async function build(o,name){
  return blob}
 
 function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
-let LN=[],ORIGLN=[],HIST=[],ACT=null,PAINT=[];
-const setSource=t=>{LN=lines(t);ORIGLN=[...LN];HIST=[];PAINT=[]},snap=()=>{HIST.push({l:[...LN],p:PAINT.slice()});if(HIST.length>80)HIST.shift()};
-function updBtn(){$('undo').disabled=!HIST.length;$('reset').disabled=!LN.length||(LN.join('\n')===ORIGLN.join('\n')&&!PAINT.length)}
+let LN=[],ORIGLN=[],HIST=[],ACT=null,PAINT=[],REDO=[];
+const setSource=t=>{LN=lines(t);ORIGLN=[...LN];HIST=[];PAINT=[];REDO=[]},snap=()=>{HIST.push({l:[...LN],p:PAINT.slice()});REDO=[];if(HIST.length>12)HIST.shift()};
+function updBtn(){$('undo').disabled=$('u2').disabled=!HIST.length;$('r2').disabled=!REDO.length;$('reset').disabled=!LN.length||(LN.join('\n')===ORIGLN.join('\n')&&!PAINT.length)}
 function stats(o){const n=o.filter(p=>p.num&&(p.num.ref==='sec'||p.num.ref==='flat')),L=[0,0,0,0,0,0];n.forEach(p=>L[p.num.lvl]++);const s=o.filter(p=>p.k==='l'&&p.b&&p.num&&p.num.ref==='sec').length;
  $('stats').textContent=n.length+' numbered paragraphs'+(s?' · '+s+' sections':'')+' · levels: '+L.map((c,i)=>c?'L'+(i+1)+'×'+c:'').filter(Boolean).join('  ')}
 function run(){const out=$('out'),sc=out.scrollTop;$('msg').textContent='';ACT=null;
@@ -359,7 +359,7 @@ $('out').addEventListener('click',e=>{const b=e.target.closest('button[data-a]')
  if(b){if(b.dataset.a==='ed'){startEdit(b.closest('div').querySelector('.tx'));return}if(b.dataset.a==='sp'){splitPara(b.closest('div').querySelector('.tx'));return}if(b.dataset.a==='cr'||b.dataset.a==='cb'){colorSelection(b.dataset.a==='cr'?'FF0000':null);return}edit(b.dataset.a,+b.dataset.ln,+b.dataset.cnt,+b.dataset.lv);return}
  const t=e.target.closest('.tx[data-ln]');if(t&&!t.isContentEditable&&getSelection().isCollapsed)startEdit(t,{x:e.clientX,y:e.clientY})});
 $('out').addEventListener('dblclick',e=>startEdit(e.target.closest('.tx[data-ln]')));
-$('undo').onclick=()=>{if(HIST.length){const h=HIST.pop();LN=h.l;PAINT=h.p;run()}};$('reset').onclick=()=>{if(LN.join('\n')!==ORIGLN.join('\n')||PAINT.length){snap();LN=[...ORIGLN];PAINT=[];run()}};
+const undo=()=>{if(!HIST.length)return;REDO.push({l:[...LN],p:PAINT.slice()});if(REDO.length>12)REDO.shift();const h=HIST.pop();LN=h.l;PAINT=h.p;run()},redo=()=>{if(!REDO.length)return;HIST.push({l:[...LN],p:PAINT.slice()});if(HIST.length>12)HIST.shift();const h=REDO.pop();LN=h.l;PAINT=h.p;run()};$('undo').onclick=$('u2').onclick=undo;$('r2').onclick=redo;$('reset').onclick=()=>{if(LN.join('\n')!==ORIGLN.join('\n')||PAINT.length){snap();LN=[...ORIGLN];PAINT=[];run()}};
 function rtf(s){let out='',i=0,st=Z0(),em=Z0(),stk=[],skip=0,ct=[];
  const mt=s.match(/\{\\colortbl([^}]*)\}/);if(mt){const pt=mt[1].split(';');pt.pop();ct=pt.map(e=>{const m=e.match(/\\red(\d+)\\green(\d+)\\blue(\d+)/);return m?[m[1],m[2],m[3]].map(v=>(+v).toString(16).padStart(2,'0')).join('').toUpperCase():''})}
  const DEST=/^\{\\(\*|fonttbl|colortbl|stylesheet|info|listtable|listoverridetable|rsidtbl|pict|header|footer|themedata|colorschememapping|datastore|latentstyles|xmlnstbl|fldinst)/;
